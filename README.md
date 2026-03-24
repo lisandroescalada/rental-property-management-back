@@ -1,5 +1,13 @@
-# Documentación del proyecto
+# rental-property-management-back
 
-La documentación principal se ha movido a la carpeta `docs/`.
+Documentación centralizada: docs/README.md — guía rápida y enlaces a la documentación completa.
 
-Ver: docs/README.md
+Quick links:
+- Docs: docs/README.md
+- Quickstart: docs/QUICKSTART.md
+- Docker setup: docs/DOCKER_SETUP.md
+
+Para levantar el entorno (desarrollo):
+
+bash docker/generate-ssl.sh
+docker-compose up -d
