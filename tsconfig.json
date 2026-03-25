@@ -16,8 +16,7 @@
       "@database": ["src/database"],
       "@database/*": ["src/database/*"]
     },
-    "ignoreDeprecations": "6.0",
-    "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
     "strictBindCallApply": true,

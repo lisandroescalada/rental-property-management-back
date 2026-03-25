@@ -3,7 +3,7 @@
 
 SHELL := /bin/bash
 ENV_FILE := .env
-COMPOSE := docker-compose
+COMPOSE := docker compose
 
 DB_USER := $(shell grep -E '^MYSQL_USER=' $(ENV_FILE) 2>/dev/null | cut -d= -f2)
 DB_PASS := $(shell grep -E '^MYSQL_PASSWORD=' $(ENV_FILE) 2>/dev/null | cut -d= -f2)

@@ -9,7 +9,7 @@ http://localhost:3000
 
 ### Health Check Endpoint
 ```
-GET http://localhost:3000/health
+GET http://localhost:3000/api/health
 ```
 
 **Response:**
@@ -149,7 +149,7 @@ Esto ejecutará:
 
 ### 1. Verificar que el servidor está levantado
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3000/api/health
 ```
 
 **Respuesta esperada:**
@@ -182,7 +182,7 @@ make ps
 ### Swagger no carga en `/api/docs`
 - Está con documentación no correcta
 - Solución: Verificar que el servidor está levantado y sin errores
-- Verificar: `http://localhost:3000/health`
+- Verificar: `http://localhost:3000/api/health`
 
 ### MySQL no conecta
 - Docker no está levantado
