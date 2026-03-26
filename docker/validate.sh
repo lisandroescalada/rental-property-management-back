@@ -87,12 +87,6 @@ else
     echo -e "${RED}❌${NC} docs/DOCKER_SETUP.md NO encontrado"
     ((ERRORS++))
 fi
-if [ -f "docs/CAMBIOS_DOCKER.md" ]; then
-    echo -e "${GREEN}✅${NC} docs/CAMBIOS_DOCKER.md existe"
-else
-    echo -e "${RED}❌${NC} docs/CAMBIOS_DOCKER.md NO encontrado"
-    ((ERRORS++))
-fi
 if [ -f "docker/README.md" ]; then
     echo -e "${GREEN}✅${NC} docker/README.md existe"
 else
