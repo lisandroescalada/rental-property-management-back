@@ -22,11 +22,14 @@ Si prefieres archivos separados, aquí están organizados por tema:
 ### Docker & DevOps
 - [DOCKER_SETUP.md](./DOCKER_SETUP.md) - Setup detallado de Docker
 - [QUICKSTART.md](./QUICKSTART.md) - Inicio rápido Docker (5 min)
+- [ARQUITECTURA_DOCKER.md](./ARQUITECTURA_DOCKER.md) - 🆕 Explicación de la arquitectura, contenedores, healthchecks
+- [MAKEFILE_DOCKER_COMMANDS.md](./MAKEFILE_DOCKER_COMMANDS.md) - 🆕 Por qué comandos se ejecutan en contenedor Docker
 
 ### Backend NestJS
 - [QUICK_START.md](./QUICK_START.md) - Setup completo NestJS
 - [SETUP_NESTJS_COMPLETE.md](./SETUP_NESTJS_COMPLETE.md) - Detalles técnicos
 - [INSTALLATION_SUMMARY.md](./INSTALLATION_SUMMARY.md) - Resumen instalación
+- [PREFIX_API_EXPLICACION.md](./PREFIX_API_EXPLICACION.md) - 🆕 Explicación del prefijo global /api en todos los endpoints
 
 ### API & URLs
 - [API_URLS.md](./API_URLS.md) - Endpoints y URLs disponibles
@@ -34,6 +37,12 @@ Si prefieres archivos separados, aquí están organizados por tema:
 ### Makefile
 - [MAKEFILE_CHEATSHEET.md](./MAKEFILE_CHEATSHEET.md) - Comandos make
 - [MAKEFILE_NESTJS.md](./MAKEFILE_NESTJS.md) - Comandos NestJS específicos
+- [MAKEFILE_DOCKER_COMMANDS.md](./MAKEFILE_DOCKER_COMMANDS.md) - 🆕 Por qué comandos se ejecutan en contenedor Docker
+- [VER_LOGS_COMPILACION.md](./VER_LOGS_COMPILACION.md) - 🆕 Cómo ver logs de compilación de NestJS
+
+### 🆘 Troubleshooting & Soluciones
+- [SOLUCION_ECONNREFUSED_MYSQL.md](./SOLUCION_ECONNREFUSED_MYSQL.md) - Error ECONNREFUSED: No puede conectar a MySQL (solución: DB_HOST=mysql)
+- [SOLUCION_HEALTHCHECK_APP.md](./SOLUCION_HEALTHCHECK_APP.md) - 🆕 Contenedor app unhealthy (solución: wget + 127.0.0.1 + start_period=60s)
 
 ---
 
@@ -99,7 +108,8 @@ docs/
 ├── INSTALLATION_SUMMARY.md       ← Resumen instalación
 ├── API_URLS.md                   ← URLs y endpoints
 ├── MAKEFILE_CHEATSHEET.md        ← Comandos make
-└── MAKEFILE_NESTJS.md            ← Comandos NestJS
+├── MAKEFILE_NESTJS.md            ← Comandos NestJS
+└── SOLUCION_ECONNREFUSED_MYSQL.md  ← 🆕 Solución error conexión BD
 ```
 
 ---

@@ -5,7 +5,7 @@ export const getDatabaseConfig = (
   configService: ConfigService,
 ): TypeOrmModuleOptions => ({
   type: 'mysql',
-  host: configService.get<string>('DB_HOST', 'localhost'),
+  host: configService.get<string>('DB_HOST', 'mysql'),
   port: configService.get<number>('DB_PORT', 3306),
   username: configService.get<string>('DB_USER', 'root'),
   password: configService.get<string>('DB_PASSWORD', ''),
@@ -19,7 +19,7 @@ export const getDatabaseConfig = (
 
 export const databaseConfig = {
   type: 'mysql',
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || 'mysql',
   port: parseInt(process.env.DB_PORT || '3306'),
   username: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',

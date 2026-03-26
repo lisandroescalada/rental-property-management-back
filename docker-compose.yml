@@ -55,7 +55,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: app-nextjs
+    container_name: app-nestjs
     restart: always
     env_file: .env
     ports:
@@ -66,11 +66,11 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "sh", "-c", "echo 'ok'"]
+      test: ["CMD", "sh", "-c", "wget -q -O- http://127.0.0.1:3000/api/health > /dev/null || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 40s
+      start_period: 60s
     deploy:
       resources:
         limits:
