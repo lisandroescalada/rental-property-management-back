@@ -81,16 +81,16 @@ fi
 echo ""
 echo -e "${BLUE}📚 Validando documentación:${NC}"
 echo ""
-if [ -f "DOCKER_SETUP.md" ]; then
-    echo -e "${GREEN}✅${NC} DOCKER_SETUP.md existe"
+if [ -f "docs/DOCKER_SETUP.md" ]; then
+    echo -e "${GREEN}✅${NC} docs/DOCKER_SETUP.md existe"
 else
-    echo -e "${RED}❌${NC} DOCKER_SETUP.md NO encontrado"
+    echo -e "${RED}❌${NC} docs/DOCKER_SETUP.md NO encontrado"
     ((ERRORS++))
 fi
-if [ -f "CAMBIOS_DOCKER.md" ]; then
-    echo -e "${GREEN}✅${NC} CAMBIOS_DOCKER.md existe"
+if [ -f "docs/CAMBIOS_DOCKER.md" ]; then
+    echo -e "${GREEN}✅${NC} docs/CAMBIOS_DOCKER.md existe"
 else
-    echo -e "${RED}❌${NC} CAMBIOS_DOCKER.md NO encontrado"
+    echo -e "${RED}❌${NC} docs/CAMBIOS_DOCKER.md NO encontrado"
     ((ERRORS++))
 fi
 if [ -f "docker/README.md" ]; then
