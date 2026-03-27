@@ -70,6 +70,39 @@ export class User {
         return this.email_verified_at !== undefined && this.email_verified_at !== null
     }
 
+    updateProfile(params: {
+        name?: string
+        email?: string
+        receive_notifications?: number
+    }): User {
+        const newName = params.name !== undefined ? params.name.trim() : this.name
+        const newEmail = params.email !== undefined
+            ? params.email.toLowerCase().trim()
+            : this.email
+
+        if (newName.length === 0) {
+            throw new Error('User name cannot be empty')
+        }
+        if (!newEmail.includes('@')) {
+            throw new Error('User email is invalid')
+        }
+
+        return User.reconstitute(
+            this.id,
+            newName,
+            newEmail,
+            this.password,
+            this.email_verified_at,
+            this.settings,
+            this.provider,
+            params.receive_notifications ?? this.receive_notifications,
+            this.password_change_required_at,
+            this.remember_token,
+            this.created_at,
+            new Date(),
+        )
+    }
+
     verifyEmail(verifiedAt: Date): User {
         return User.reconstitute(
             this.id, this.name, this.email, this.password,

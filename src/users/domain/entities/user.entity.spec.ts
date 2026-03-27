@@ -104,4 +104,66 @@ describe('User — domain entity', () => {
             expect(verified.email_verified_at).toBe(verifiedAt)
         })
     })
+
+    describe('updateProfile()', () => {
+        it('returns a new immutable instance — original is unchanged', () => {
+            const user = User.create({ name: 'Original', email: 'a@b.com', hashedPassword: 'pass' })
+            const updated = user.updateProfile({ name: 'Updated' })
+
+            expect(user.name).toBe('Original')   // original untouched
+            expect(updated.name).toBe('Updated')  // new instance reflects the change
+            expect(updated).not.toBe(user)        // different reference
+        })
+
+        it('trims whitespace from the new name', () => {
+            const user = User.create({ name: 'Test', email: 'a@b.com', hashedPassword: 'pass' })
+            const updated = user.updateProfile({ name: '  John Doe  ' })
+            expect(updated.name).toBe('John Doe')
+        })
+
+        it('lowercases and trims the new email', () => {
+            const user = User.create({ name: 'Test', email: 'a@b.com', hashedPassword: 'pass' })
+            const updated = user.updateProfile({ email: '  UPPER@EXAMPLE.COM  ' })
+            expect(updated.email).toBe('upper@example.com')
+        })
+
+        it('throws an error if the new name becomes empty after trimming', () => {
+            const user = User.create({ name: 'Test', email: 'a@b.com', hashedPassword: 'pass' })
+            expect(() => user.updateProfile({ name: '   ' })).toThrow('User name cannot be empty')
+        })
+
+        it('throws an error if the new email is invalid', () => {
+            const user = User.create({ name: 'Test', email: 'a@b.com', hashedPassword: 'pass' })
+            expect(() => user.updateProfile({ email: 'not-an-email' })).toThrow('User email is invalid')
+        })
+
+        it('preserves unchanged fields when only name is updated', () => {
+            const user = User.create({ name: 'Test', email: 'original@b.com', hashedPassword: 'pass' })
+            const updated = user.updateProfile({ name: 'New Name' })
+            expect(updated.email).toBe('original@b.com')
+            expect(updated.password).toBe(user.password)
+            expect(updated.id).toBe(user.id)
+        })
+
+        it('preserves unchanged fields when only email is updated', () => {
+            const user = User.create({ name: 'Original Name', email: 'a@b.com', hashedPassword: 'pass' })
+            const updated = user.updateProfile({ email: 'new@b.com' })
+            expect(updated.name).toBe('Original Name')
+        })
+
+        it('updates receive_notifications independently', () => {
+            const user = User.create({ name: 'Test', email: 'a@b.com', hashedPassword: 'pass', receive_notifications: 1 })
+            const updated = user.updateProfile({ receive_notifications: 0 })
+            expect(updated.receive_notifications).toBe(0)
+            expect(user.receive_notifications).toBe(1) // original unchanged
+        })
+
+        it('applies all fields at once when all are provided', () => {
+            const user = User.create({ name: 'Old', email: 'old@b.com', hashedPassword: 'pass' })
+            const updated = user.updateProfile({ name: 'New', email: 'NEW@B.COM', receive_notifications: 0 })
+            expect(updated.name).toBe('New')
+            expect(updated.email).toBe('new@b.com')
+            expect(updated.receive_notifications).toBe(0)
+        })
+    })
 })

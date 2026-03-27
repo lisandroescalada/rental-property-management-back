@@ -4,7 +4,6 @@ import { UpdateUserCommand } from './update-user.command'
 import { UserRepository } from 'src/users/domain/repositories/user.repository'
 import { USER_REPOSITORY_TOKEN } from 'src/users/domain/repositories/user.repository.token'
 import { UserNotFoundError } from 'src/users/domain/errors/user-not-found.error'
-import { User } from 'src/users/domain/entities/user.entity'
 
 @CommandHandler(UpdateUserCommand)
 export class UpdateUserHandler implements ICommandHandler<UpdateUserCommand> {
@@ -17,20 +16,11 @@ export class UpdateUserHandler implements ICommandHandler<UpdateUserCommand> {
         const existing = await this.userRepository.findById(command.id)
         if (!existing) throw new UserNotFoundError(`User with id ${command.id} not found`)
 
-        const updated = User.reconstitute(
-            existing.id,
-            command.name ?? existing.name,
-            command.email ?? existing.email,
-            existing.password,
-            existing.email_verified_at,
-            existing.settings,
-            existing.provider,
-            command.receive_notifications ?? existing.receive_notifications,
-            existing.password_change_required_at,
-            existing.remember_token,
-            existing.created_at,
-            new Date(),
-        )
+        const updated = existing.updateProfile({
+            name: command.name,
+            email: command.email,
+            receive_notifications: command.receive_notifications,
+        })
 
         await this.userRepository.update(command.id, updated)
     }
