@@ -4,7 +4,11 @@
 SHELL := /bin/bash
 ENV_FILE := .env
 COMPOSE := docker compose
-APP_CONTAINER := app-nestjs
+
+# docker compose exec → service name  (key in docker-compose.yml services:)
+# docker exec         → container name (container_name in docker-compose.yml)
+APP_SERVICE   := app         # ← used with: $(COMPOSE) exec $(APP_SERVICE) ...
+APP_CONTAINER := app-nestjs  # ← used with: docker exec $(APP_CONTAINER) ...
 
 DB_USER := $(shell grep -E '^MYSQL_USER=' $(ENV_FILE) 2>/dev/null | cut -d= -f2)
 DB_PASS := $(shell grep -E '^MYSQL_PASSWORD=' $(ENV_FILE) 2>/dev/null | cut -d= -f2)
@@ -54,12 +58,12 @@ rebuild-dev:
 # Uso: make exec CMD="npm run migration:run"
 exec:
 	@if [ -z "$(CMD)" ]; then echo "❌ ERROR: especifica CMD=\"<comando>\""; exit 1; fi
-	@$(COMPOSE) exec $(APP_CONTAINER) sh -c "$(CMD)"
+	@$(COMPOSE) exec $(APP_SERVICE) sh -c "$(CMD)"
 
 # Abrir una shell interactiva dentro del contenedor app
 shell:
-	@echo "🐚 Abriendo shell en $(APP_CONTAINER)..."
-	@$(COMPOSE) exec $(APP_CONTAINER) sh
+	@echo "🐚 Abriendo shell en $(APP_SERVICE)..."
+	@$(COMPOSE) exec $(APP_SERVICE) sh
 
 # Logs
 logs:
@@ -116,7 +120,9 @@ db-backup:
 	$(COMPOSE) exec -T mysql sh -c 'exec mysqldump -u "${DB_USER}" -p"${DB_PASS}" "${DB_NAME}"' > backups/backup_$${TS}.sql
 
 # ============================================================================
-# 🚀 NestJS — all commands run INSIDE the Docker container (app-nestjs / app-nestjs-dev)
+# 🚀 NestJS — all commands run INSIDE the Docker container via compose exec
+# $(APP_SERVICE) = compose service name ("app")  → docker compose exec $(APP_SERVICE)
+# $(APP_CONTAINER) = container name ("app-nestjs") → only for docker exec (non-compose)
 # To run locally without Docker use npm scripts directly: npm run <script>
 # ============================================================================
 
@@ -129,13 +135,13 @@ lint:    nest-lint
 clean:   nest-clean
 
 start:
-	@echo "▶️  Container '$(APP_CONTAINER)' already runs 'node dist/main' on startup."
+	@echo "▶️  Service '$(APP_SERVICE)' (container: $(APP_CONTAINER)) runs 'node dist/main' on startup."
 	@echo "     To restart it: make restart"
 
 # ── Dependencies ─────────────────────────────────────────────────────────────
 nest-install:
 	@echo "📦 Installing dependencies inside the container..."
-	@$(COMPOSE) exec $(APP_CONTAINER) npm install --legacy-peer-deps
+	@$(COMPOSE) exec $(APP_SERVICE) npm install --legacy-peer-deps
 
 # ── Development (hot-reload via app-dev container) ───────────────────────────
 nest-dev: up-dev
@@ -145,31 +151,31 @@ nest-dev: up-dev
 # ── Build ────────────────────────────────────────────────────────────────────
 nest-build:
 	@echo "🔨 Building NestJS inside the container..."
-	@$(COMPOSE) exec $(APP_CONTAINER) npm run build
+	@$(COMPOSE) exec $(APP_SERVICE) npm run build
 	@echo "✅ Build complete — output in dist/"
 
 # ── Tests ────────────────────────────────────────────────────────────────────
 nest-test:
 	@echo "🧪 Running unit tests..."
-	@$(COMPOSE) exec $(APP_CONTAINER) npm test
+	@$(COMPOSE) exec $(APP_SERVICE) npm test
 
 nest-test-watch:
 	@echo "🧪 Running tests in watch mode..."
-	@$(COMPOSE) exec $(APP_CONTAINER) npm run test:watch
+	@$(COMPOSE) exec $(APP_SERVICE) npm run test:watch
 
 nest-test-cov:
 	@echo "📊 Running tests with coverage..."
-	@$(COMPOSE) exec $(APP_CONTAINER) npm run test:cov
+	@$(COMPOSE) exec $(APP_SERVICE) npm run test:cov
 
 # ── Lint ─────────────────────────────────────────────────────────────────────
 nest-lint:
 	@echo "📝 Running ESLint..."
-	@$(COMPOSE) exec $(APP_CONTAINER) npm run lint
+	@$(COMPOSE) exec $(APP_SERVICE) npm run lint
 
 # ── Clean ────────────────────────────────────────────────────────────────────
 nest-clean:
 	@echo "🧹 Cleaning dist/ inside the container..."
-	@$(COMPOSE) exec $(APP_CONTAINER) sh -c "rm -rf dist/ && npm cache clean --force"
+	@$(COMPOSE) exec $(APP_SERVICE) sh -c "rm -rf dist/ && npm cache clean --force"
 	@echo "✅ Clean complete"
 
 # ── Migrations ───────────────────────────────────────────────────────────────
@@ -180,7 +186,7 @@ nest-migration-create:
 		exit 1; \
 	fi
 	@echo "📝 Creating empty migration: $(NAME)"
-	@$(COMPOSE) exec $(APP_CONTAINER) npm run migration:create -- src/database/migrations/$(NAME)
+	@$(COMPOSE) exec $(APP_SERVICE) npm run migration:create -- src/database/migrations/$(NAME)
 
 nest-migration-generate:
 	@if [ -z "$(NAME)" ]; then \
@@ -189,22 +195,22 @@ nest-migration-generate:
 		exit 1; \
 	fi
 	@echo "🔄 Generating migration from entity changes: $(NAME)"
-	@$(COMPOSE) exec $(APP_CONTAINER) npm run migration:generate -- src/database/migrations/$(NAME)
+	@$(COMPOSE) exec $(APP_SERVICE) npm run migration:generate -- src/database/migrations/$(NAME)
 
 nest-migration-run:
 	@echo "⬆️  Running pending migrations..."
-	@$(COMPOSE) exec $(APP_CONTAINER) npm run migration:run
+	@$(COMPOSE) exec $(APP_SERVICE) npm run migration:run
 	@echo "✅ Migrations complete"
 
 nest-migration-revert:
 	@echo "⬇️  Reverting last migration..."
-	@$(COMPOSE) exec $(APP_CONTAINER) npm run migration:revert
+	@$(COMPOSE) exec $(APP_SERVICE) npm run migration:revert
 	@echo "✅ Migration reverted"
 
 # ── Seeds ────────────────────────────────────────────────────────────────────
 nest-seed:
 	@echo "🌱 Running seeds..."
-	@$(COMPOSE) exec $(APP_CONTAINER) npm run seed:run
+	@$(COMPOSE) exec $(APP_SERVICE) npm run seed:run
 
 # ── Full setup ───────────────────────────────────────────────────────────────
 nest-full-setup: up
