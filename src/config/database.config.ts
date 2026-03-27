@@ -24,11 +24,9 @@ export const databaseConfig = {
   username: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'app_db',
-  entities: ['src/**/*.orm-entity.ts'],
+  entities: ['src/**/*.orm-entity.ts'],   // ← same convention as ormconfig.ts
   migrations: ['src/database/migrations/*.ts'],
-  seeds: ['src/database/seeds/*.ts'],
-  synchronize: process.env.NODE_ENV !== 'production',
+  synchronize: false,
   autoLoadEntities: true,
   logging: process.env.DB_LOGGING === 'true',
 };
-
