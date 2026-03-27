@@ -66,7 +66,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "sh", "-c", "wget -q -O- http://127.0.0.1:3000/api/health > /dev/null || exit 1"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -75,6 +75,28 @@ services:
       resources:
         limits:
           memory: 512m
+
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: app-nestjs-dev
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - DB_HOST=mysql
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - app-network
+    profiles:
+      - dev
 
   nginx:
     image: nginx:latest
