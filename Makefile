@@ -5,39 +5,33 @@ SHELL := /bin/bash
 ENV_FILE := .env
 COMPOSE := docker compose
 
+# docker compose exec → service name  (key in docker-compose.yml services:)
+# docker exec         → container name (container_name in docker-compose.yml)
+APP_SERVICE   := app         # ← used with: $(COMPOSE) exec $(APP_SERVICE) ...
+APP_CONTAINER := app-nestjs  # ← used with: docker exec $(APP_CONTAINER) ...
+
 DB_USER := $(shell grep -E '^MYSQL_USER=' $(ENV_FILE) 2>/dev/null | cut -d= -f2)
 DB_PASS := $(shell grep -E '^MYSQL_PASSWORD=' $(ENV_FILE) 2>/dev/null | cut -d= -f2)
 DB_NAME := $(shell grep -E '^MYSQL_DATABASE=' $(ENV_FILE) 2>/dev/null | cut -d= -f2)
 
-# Función para verificar si el contenedor app está corriendo
-define check_app_running
-	@if ! $(COMPOSE) ps app 2>/dev/null | grep -q "running"; then \
-		echo ""; \
-		echo "❌ Error: El contenedor 'app' no está corriendo"; \
-		echo ""; \
-		echo "📍 Solución: Primero levanta los servicios con:"; \
-		echo ""; \
-		echo "   make up"; \
-		echo ""; \
-		echo "⏳ Espera ~30-40 segundos a que todo inicialice"; \
-		echo ""; \
-		echo "✅ Luego ejecuta tu comando nuevamente"; \
-		echo ""; \
-		exit 1; \
-	fi
-endef
+.PHONY: help ssl up up-dev down restart rebuild rebuild-dev logs logs-service ps status validate \
+        migrate mysql-migrate sql-import db-backup exec shell \
+        nest-install nest-dev nest-build nest-start nest-test nest-test-watch nest-test-cov nest-lint \
+        nest-migration-create nest-migration-generate nest-migration-run nest-migration-revert \
+        nest-seed nest-clean nest-full-setup \
+        dev build start test lint clean install
 
-.PHONY: help ssl up down restart rebuild logs logs-service ps status validate migrate mysql-migrate sql-import db-backup \
-         nest-install nest-dev nest-build nest-start nest-test nest-test-watch nest-test-cov nest-lint \
-         nest-migration-create nest-migration-generate nest-migration-run nest-migration-revert nest-seed nest-clean nest-full-setup \
-         dev build start test lint clean install
 
-# ...existing code...
-
-# Levantar servicios Docker
+# Levantar servicios Docker (producción: MySQL + phpMyAdmin + Nginx + app)
 up:
 	@echo "⬆️ Levantando servicios..."
 	@$(COMPOSE) up -d
+
+up-dev:
+	@echo "⬆️ Levantando infraestructura + app en modo desarrollo..."
+	@$(COMPOSE) --profile dev up -d mysql phpmyadmin app-dev
+	@echo "✅ MySQL en :3306 | phpMyAdmin en :8080 | NestJS dev en :3000"
+	@echo "📋 Logs: make logs-service SERVICE=app-nestjs-dev"
 
 # Parar servicios
 down:
@@ -54,6 +48,23 @@ rebuild:
 	@echo "🔨 Reconstruyendo imágenes y levantando servicios..."
 	@$(COMPOSE) up -d --build
 
+# Reconstruir solo la imagen de desarrollo
+rebuild-dev:
+	@echo "🔨 Reconstruyendo imagen de desarrollo..."
+	@$(COMPOSE) --profile dev build app-dev
+	@$(COMPOSE) --profile dev up -d app-dev
+
+# Ejecutar un comando puntual dentro del contenedor app (producción)
+# Uso: make exec CMD="npm run migration:run"
+exec:
+	@if [ -z "$(CMD)" ]; then echo "❌ ERROR: especifica CMD=\"<comando>\""; exit 1; fi
+	@$(COMPOSE) exec $(APP_SERVICE) sh -c "$(CMD)"
+
+# Abrir una shell interactiva dentro del contenedor app
+shell:
+	@echo "🐚 Abriendo shell en $(APP_SERVICE)..."
+	@$(COMPOSE) exec $(APP_SERVICE) sh
+
 # Logs
 logs:
 	@$(COMPOSE) logs -f
@@ -62,58 +73,11 @@ logs-service:
 	@if [ -z "$(SERVICE)" ]; then echo "ERROR: especifica SERVICE=<name>"; exit 1; fi
 	@$(COMPOSE) logs -f $(SERVICE)
 
-# Ver logs de compilación de NestJS
-logs-build:
-	@echo "📝 Mostrando logs de compilación de NestJS..."
-	@$(COMPOSE) logs app | tail -100
-
-# Ver logs de app en tiempo real
-logs-app:
-	@$(COMPOSE) logs -f app
-
-# Estado y healthchecks
+# Estado
 ps:
-	@echo "📊 Estado de contenedores:"
 	@$(COMPOSE) ps
-	@echo ""
-	@echo "🏥 Healthchecks (Estado de salud):"
-	@$(COMPOSE) ps --format "table {{.Names}}\t{{.Status}}"
 
 status: ps
-
-# Verificar si los servicios están corriendo
-check:
-	@echo "🔍 Verificando estado de servicios..."
-	@echo ""
-	@if $(COMPOSE) ps app 2>/dev/null | grep -q "running"; then \
-		echo "✅ Contenedor 'app' está CORRIENDO"; \
-	else \
-		echo "❌ Contenedor 'app' NO está corriendo"; \
-		echo ""; \
-		echo "📍 Para levantarlo ejecuta: make up"; \
-	fi
-	@echo ""
-	@if $(COMPOSE) ps mysql 2>/dev/null | grep -q "running"; then \
-		echo "✅ Contenedor 'mysql' está CORRIENDO"; \
-	else \
-		echo "❌ Contenedor 'mysql' NO está corriendo"; \
-	fi
-	@echo ""
-	@if $(COMPOSE) ps nginx 2>/dev/null | grep -q "running"; then \
-		echo "✅ Contenedor 'nginx' está CORRIENDO"; \
-	else \
-		echo "❌ Contenedor 'nginx' NO está corriendo"; \
-	fi
-	@echo ""
-
-# Verificar que app está healthy
-health:
-	@echo "🏥 Verificando healthcheck del contenedor app..."
-	@echo ""
-	@curl -s http://localhost:3000/api/health 2>/dev/null | grep -q "ok" && \
-		echo "✅ NestJS está saludable y respondiendo en /api/health" || \
-		echo "❌ Endpoint /api/health no disponible"
-	@echo ""
 
 # Validación (si existe script)
 validate:
@@ -156,242 +120,157 @@ db-backup:
 	$(COMPOSE) exec -T mysql sh -c 'exec mysqldump -u "${DB_USER}" -p"${DB_PASS}" "${DB_NAME}"' > backups/backup_$${TS}.sql
 
 # ============================================================================
-# 🚀 NestJS Backend - Comandos de Instalación y Desarrollo
+# 🚀 NestJS — all commands run INSIDE the Docker container via compose exec
+# $(APP_SERVICE) = compose service name ("app")  → docker compose exec $(APP_SERVICE)
+# $(APP_CONTAINER) = container name ("app-nestjs") → only for docker exec (non-compose)
+# To run locally without Docker use npm scripts directly: npm run <script>
 # ============================================================================
 
-.PHONY: nest-install nest-dev nest-build nest-start nest-test nest-lint \
-        nest-migration-create nest-migration-generate nest-migration-run \
-        nest-migration-revert nest-seed nest-clean nest-full-setup \
-        dev build start test lint clean
-
-# ============================================================================
-# 📦 Comandos npm Rápidos (Atajos) - Ejecutados DENTRO del contenedor Docker
-# ============================================================================
-
-# Instalador dependencias
+# ── Aliases ─────────────────────────────────────────────────────────────────
 install: nest-install
+dev:     up-dev
+build:   nest-build
+test:    nest-test
+lint:    nest-lint
+clean:   nest-clean
 
-# Desarrollo con watch mode (automático)
-dev:
-	$(check_app_running)
-	@echo "🚀 Iniciando NestJS en modo desarrollo dentro del contenedor..."
-	@$(COMPOSE) exec app npm run dev
-
-# Compilar para producción
-build:
-	$(check_app_running)
-	@echo "🔨 Compilando NestJS para producción dentro del contenedor..."
-	@$(COMPOSE) exec app npm run build
-	@echo "✅ Compilación completada en dist/"
-
-# Ejecutar desde dist/ compilado
 start:
-	$(check_app_running)
-	@echo "▶️  Iniciando NestJS (compilado) dentro del contenedor..."
-	@$(COMPOSE) exec app npm start
+	@echo "▶️  Service '$(APP_SERVICE)' (container: $(APP_CONTAINER)) runs 'node dist/main' on startup."
+	@echo "     To restart it: make restart"
 
-# Ejecutar tests
-test:
-	$(check_app_running)
-	@echo "🧪 Ejecutando tests unitarios dentro del contenedor..."
-	@$(COMPOSE) exec app npm test
-
-# Linting
-lint:
-	$(check_app_running)
-	@echo "📝 Ejecutando linting dentro del contenedor..."
-	@$(COMPOSE) exec app npm run lint
-
-# Limpiar
-clean:
-	$(check_app_running)
-	@echo "🧹 Limpiando dist/ y cache dentro del contenedor..."
-	@$(COMPOSE) exec app rm -rf dist/
-	@$(COMPOSE) exec app npm cache clean --force
-	@echo "✅ Limpieza completada"
-
-# ============================================================================
-# 📦 Comandos npm Detallados (Con descripción) - Ejecutados DENTRO del contenedor
-# ============================================================================
-
-# Instalar dependencias de NestJS
+# ── Dependencies ─────────────────────────────────────────────────────────────
 nest-install:
-	@echo "📦 Instalando dependencias de NestJS dentro del contenedor..."
-	@$(COMPOSE) exec app npm install --legacy-peer-deps
+	@echo "📦 Installing dependencies inside the container..."
+	@$(COMPOSE) exec $(APP_SERVICE) npm install --legacy-peer-deps
 
-# Ejecutar en modo desarrollo (watch mode)
-nest-dev:
-	$(check_app_running)
-	@echo "🚀 Iniciando NestJS en modo desarrollo dentro del contenedor..."
-	@$(COMPOSE) exec app npm run dev
+# ── Development (hot-reload via app-dev container) ───────────────────────────
+nest-dev: up-dev
+	@echo "🚀 NestJS running in development mode."
+	@echo "📋 Live logs: make logs-service SERVICE=app-nestjs-dev"
 
-# Compilar proyecto para producción
+# ── Build ────────────────────────────────────────────────────────────────────
 nest-build:
-	$(check_app_running)
-	@echo "🔨 Compilando NestJS para producción dentro del contenedor..."
-	@$(COMPOSE) exec app npm run build
-	@echo "✅ Compilación completada en dist/"
+	@echo "🔨 Building NestJS inside the container..."
+	@$(COMPOSE) exec $(APP_SERVICE) npm run build
+	@echo "✅ Build complete — output in dist/"
 
-# Ejecutar proyecto compilado
-nest-start:
-	$(check_app_running)
-	@echo "▶️  Iniciando NestJS (compilado) dentro del contenedor..."
-	@$(COMPOSE) exec app npm start
-
-# Ejecutar tests unitarios
+# ── Tests ────────────────────────────────────────────────────────────────────
 nest-test:
-	$(check_app_running)
-	@echo "🧪 Ejecutando tests unitarios dentro del contenedor..."
-	@$(COMPOSE) exec app npm test
+	@echo "🧪 Running unit tests..."
+	@$(COMPOSE) exec $(APP_SERVICE) npm test
 
-# Ejecutar tests en modo watch
 nest-test-watch:
-	$(check_app_running)
-	@echo "🧪 Tests en modo watch dentro del contenedor..."
-	@$(COMPOSE) exec app npm run test:watch
+	@echo "🧪 Running tests in watch mode..."
+	@$(COMPOSE) exec $(APP_SERVICE) npm run test:watch
 
-# Ejecutar tests con coverage
 nest-test-cov:
-	$(check_app_running)
-	@echo "📊 Tests con coverage dentro del contenedor..."
-	@$(COMPOSE) exec app npm run test:cov
+	@echo "📊 Running tests with coverage..."
+	@$(COMPOSE) exec $(APP_SERVICE) npm run test:cov
 
-# Ejecutar linting y fix
+# ── Lint ─────────────────────────────────────────────────────────────────────
 nest-lint:
-	$(check_app_running)
-	@echo "📝 Ejecutando linting dentro del contenedor..."
-	@$(COMPOSE) exec app npm run lint
+	@echo "📝 Running ESLint..."
+	@$(COMPOSE) exec $(APP_SERVICE) npm run lint
 
-# Crear una migración vacía
-nest-migration-create:
-	$(check_app_running)
-	@if [ -z "$(NAME)" ]; then \
-		echo "ERROR: especifica NAME=NombreMigracion"; \
-		echo "Ejemplo: make nest-migration-create NAME=CreateUsersTable"; \
-		exit 1; \
-	fi
-	@echo "📝 Creando migración: $(NAME)"
-	@$(COMPOSE) exec app npm run migration:create -- -n $(NAME)
-
-# Generar migración basada en cambios de entidades
-nest-migration-generate:
-	$(check_app_running)
-	@if [ -z "$(NAME)" ]; then \
-		echo "ERROR: especifica NAME=NombreMigracion"; \
-		echo "Ejemplo: make nest-migration-generate NAME=AgregarPropiedad"; \
-		exit 1; \
-	fi
-	@echo "🔄 Generando migración: $(NAME)"
-	@$(COMPOSE) exec app npm run migration:generate -- -n $(NAME)
-
-# Ejecutar migraciones pendientes
-nest-migration-run:
-	$(check_app_running)
-	@echo "⬆️  Ejecutando migraciones dentro del contenedor..."
-	@$(COMPOSE) exec app npm run migration:run
-	@echo "✅ Migraciones ejecutadas"
-
-# Revertir última migración
-nest-migration-revert:
-	$(check_app_running)
-	@echo "⬇️  Revirtiendo última migración dentro del contenedor..."
-	@$(COMPOSE) exec app npm run migration:revert
-	@echo "✅ Migración revertida"
-
-# Ejecutar seeds (si existen)
-nest-seed:
-	$(check_app_running)
-	@echo "🌱 Ejecutando seeds dentro del contenedor..."
-	@$(COMPOSE) exec app npm run seed:run
-
-# Limpiar dist/ y node_modules
+# ── Clean ────────────────────────────────────────────────────────────────────
 nest-clean:
-	$(check_app_running)
-	@echo "🧹 Limpiando dist/ y cache dentro del contenedor..."
-	@$(COMPOSE) exec app rm -rf dist/
-	@$(COMPOSE) exec app npm cache clean --force
-	@echo "✅ Limpieza completada"
+	@echo "🧹 Cleaning dist/ inside the container..."
+	@$(COMPOSE) exec $(APP_SERVICE) sh -c "rm -rf dist/ && npm cache clean --force"
+	@echo "✅ Clean complete"
 
-# Setup completo: instalar + docker up + build
-nest-full-setup: up nest-install nest-build
+# ── Migrations ───────────────────────────────────────────────────────────────
+nest-migration-create:
+	@if [ -z "$(NAME)" ]; then \
+		echo "❌ ERROR: specify NAME=MigrationName"; \
+		echo "Example: make nest-migration-create NAME=CreateUsersTable"; \
+		exit 1; \
+	fi
+	@echo "📝 Creating empty migration: $(NAME)"
+	@$(COMPOSE) exec $(APP_SERVICE) npm run migration:create -- src/database/migrations/$(NAME)
+
+nest-migration-generate:
+	@if [ -z "$(NAME)" ]; then \
+		echo "❌ ERROR: specify NAME=MigrationName"; \
+		echo "Example: make nest-migration-generate NAME=AddEmailColumn"; \
+		exit 1; \
+	fi
+	@echo "🔄 Generating migration from entity changes: $(NAME)"
+	@$(COMPOSE) exec $(APP_SERVICE) npm run migration:generate -- src/database/migrations/$(NAME)
+
+nest-migration-run:
+	@echo "⬆️  Running pending migrations..."
+	@$(COMPOSE) exec $(APP_SERVICE) npm run migration:run
+	@echo "✅ Migrations complete"
+
+nest-migration-revert:
+	@echo "⬇️  Reverting last migration..."
+	@$(COMPOSE) exec $(APP_SERVICE) npm run migration:revert
+	@echo "✅ Migration reverted"
+
+# ── Seeds ────────────────────────────────────────────────────────────────────
+nest-seed:
+	@echo "🌱 Running seeds..."
+	@$(COMPOSE) exec $(APP_SERVICE) npm run seed:run
+
+# ── Full setup ───────────────────────────────────────────────────────────────
+nest-full-setup: up
 	@echo ""
 	@echo "╔════════════════════════════════════════════════════════════╗"
-	@echo "║  ✅ Setup completo de NestJS finalizado                     ║"
+	@echo "║  ✅ NestJS setup complete                                  ║"
 	@echo "╠════════════════════════════════════════════════════════════╣"
-	@echo "║  Próximos pasos:                                           ║"
-	@echo "║  1. make nest-migration-run    # Ejecutar migraciones      ║"
-	@echo "║  2. make nest-dev              # Iniciar en desarrollo     ║"
-	@echo "║  3. Acceder a la aplicación:                               ║"
-	@echo "║     http://localhost:3000                                  ║"
-	@echo "║  4. Ver documentación Swagger:                             ║"
-	@echo "║     http://localhost:3000/api/docs                        ║"
-	@echo "║  5. Acceder a phpMyAdmin:                                  ║"
-	@echo "║     http://localhost:8080                                  ║"
+	@echo "║  Next steps:                                              ║"
+	@echo "║  1. make nest-migration-run   # run pending migrations    ║"
+	@echo "║  2. make up-dev               # start with hot-reload     ║"
+	@echo "║  3. Swagger: http://localhost:3000/api/docs               ║"
 	@echo "╚════════════════════════════════════════════════════════════╝"
 	@echo ""
 
-# Actualizar información de ayuda
+# ── Help ─────────────────────────────────────────────────────────────────────
 help:
 	@echo "╔════════════════════════════════════════════════════════════╗"
-	@echo "║          Makefile - Comandos Disponibles                   ║"
-	@echo "║     ℹ️  Los comandos npm se ejecutan DENTRO del contenedor   ║"
+	@echo "║              Makefile — Available Commands                 ║"
 	@echo "╚════════════════════════════════════════════════════════════╝"
 	@echo ""
-	@echo "📦 NPM RÁPIDO (Atajos) - Se ejecutan DENTRO del contenedor:"
-	@echo "  make dev               # npm run dev (watch mode)"
-	@echo "  make build             # npm run build (compilar)"
-	@echo "  make start             # npm start (ejecutar compilado)"
-	@echo "  make test              # npm test (tests)"
-	@echo "  make lint              # npm run lint (linting)"
-	@echo "  make clean             # Limpiar dist/ y cache"
-	@echo "  make install           # npm install (instalar dependencias)"
+	@echo "🐳 DOCKER:"
+	@echo "  make up                           # Start all services (production)"
+	@echo "  make up-dev                       # MySQL + phpMyAdmin + NestJS hot-reload"
+	@echo "  make down                         # Stop all services"
+	@echo "  make restart                      # Restart all services"
+	@echo "  make rebuild                      # Rebuild production image and start"
+	@echo "  make rebuild-dev                  # Rebuild dev image and start"
+	@echo "  make logs                         # Stream logs from all services"
+	@echo "  make logs-service SERVICE=<name>  # Stream logs from one service"
+	@echo "  make ps                           # Show container status"
+	@echo "  make exec CMD=\"<cmd>\"             # Run a command in app-nestjs"
+	@echo "  make shell                        # Open a shell in app-nestjs"
 	@echo ""
-	@echo "🐳 DOCKER & BASE DE DATOS:"
-	@echo "  make ssl               # Generar certificados SSL"
-	@echo "  make up                # Levantar servicios (docker-compose up -d)"
-	@echo "  make down              # Parar servicios (docker-compose down)"
-	@echo "  make restart           # Reiniciar servicios"
-	@echo "  make rebuild           # Reconstruir imágenes y levantar"
-	@echo "  make check             # ✅ Ver si app está corriendo"
-	@echo "  make logs              # Ver logs de todos los servicios"
-	@echo "  make logs-app          # Ver logs de app en TIEMPO REAL (watchmode)"
-	@echo "  make logs-build        # Ver últimos logs de compilación"
-	@echo "  make logs-service SERVICE=<name>  # Logs de servicio específico"
-	@echo "  make ps                # Estado de contenedores"
-	@echo "  make status            # Alias para ps"
-	@echo "  make health            # Verificar healthcheck de app"
-	@echo "  make validate          # Ejecutar validación (docker/validate.sh)"
-	@echo "  make mysql-migrate     # Aplicar scripts SQL (docker/sql/)"
-	@echo "  make sql-import FILE=<path>  # Importar SQL al contenedor"
-	@echo "  make db-backup         # Backup de la BD (en ./backups/)"
+	@echo "🗄️  DATABASE:"
+	@echo "  make ssl                          # Generate self-signed SSL certs"
+	@echo "  make validate                     # Run docker/validate.sh"
+	@echo "  make mysql-migrate                # Apply SQL scripts from docker/sql/"
+	@echo "  make sql-import FILE=<path>       # Import a SQL file into MySQL"
+	@echo "  make db-backup                    # Dump the database to ./backups/"
 	@echo ""
-	@echo "🚀 NESTJS BACKEND (Detallado) - Se ejecutan DENTRO del contenedor:"
-	@echo "  make nest-install      # Instalar dependencias npm"
-	@echo "  make nest-dev          # Iniciar en desarrollo (watch mode)"
-	@echo "  make nest-build        # Compilar para producción"
-	@echo "  make nest-start        # Ejecutar compilado"
-	@echo "  make nest-test         # Ejecutar tests"
-	@echo "  make nest-test-watch   # Tests en watch mode"
-	@echo "  make nest-test-cov     # Tests con coverage"
-	@echo "  make nest-lint         # Linting y fix"
-	@echo "  make nest-clean        # Limpiar dist/ y cache"
+	@echo "🚀 NESTJS (run inside container):"
+	@echo "  make dev  / make up-dev           # Hot-reload via app-nestjs-dev"
+	@echo "  make build / nest-build           # Compile for production"
+	@echo "  make test  / nest-test            # Unit tests"
+	@echo "  make nest-test-watch              # Tests in watch mode"
+	@echo "  make nest-test-cov                # Tests with coverage"
+	@echo "  make lint  / nest-lint            # ESLint + autofix"
+	@echo "  make clean / nest-clean           # Remove dist/"
+	@echo "  make install / nest-install       # npm install"
 	@echo ""
-	@echo "🗄️  MIGRACIONES TYPEORM (Se ejecutan DENTRO del contenedor):"
-	@echo "  make nest-migration-create NAME=MigracionVacia"
-	@echo "  make nest-migration-generate NAME=AgregarCampo"
-	@echo "  make nest-migration-run     # Ejecutar migraciones pendientes"
-	@echo "  make nest-migration-revert  # Revertir última migración"
+	@echo "🗄️  TYPEORM MIGRATIONS (run inside container):"
+	@echo "  make nest-migration-create  NAME=CreateUsersTable"
+	@echo "  make nest-migration-generate NAME=AddEmailColumn"
+	@echo "  make nest-migration-run           # Run pending migrations"
+	@echo "  make nest-migration-revert        # Revert last migration"
 	@echo ""
-	@echo "🌱 DATOS:"
-	@echo "  make nest-seed         # Ejecutar seeds (poblar datos)"
+	@echo "🌱 SEEDS:"
+	@echo "  make nest-seed                    # Populate the database"
 	@echo ""
-	@echo "⚡ SETUP COMPLETO:"
-	@echo "  make nest-full-setup   # Up + Install + Build (todo en contenedor)"
+	@echo "⚡ FULL SETUP:"
+	@echo "  make nest-full-setup              # docker up + wait for app"
 	@echo ""
-	@echo "📍 URLs ÚTILES DESPUÉS DE INICIAR:"
-	@echo "  http://localhost:3000              # API NestJS"
-	@echo "  http://localhost:3000/api/docs     # Swagger (documentación)"
-	@echo "  http://localhost:8080              # phpMyAdmin"
-	@echo ""
-
 

@@ -1,124 +1,84 @@
 # 📚 Índice de Documentación
 
-## 🎯 **[RESUMEN_FINAL.md](./RESUMEN_FINAL.md)** ⭐ EMPIEZA AQUÍ
+## 🎯 Por dónde empezar
 
-Resumen completo de todo lo configurado:
-- ✅ Estado actual del proyecto
-- 🔧 Problemas solucionados
-- 📍 URLs disponibles
-- 🚀 Comandos principales
-- 🎯 Próximos pasos
-
-### También Útil:
-- **[REFERENCIA_RAPIDA.md](./REFERENCIA_RAPIDA.md)** - Comandos essenciales (1 minuto)
-- **[CHECKLIST_FINAL.md](./CHECKLIST_FINAL.md)** - Checklist verificado (5 minutos)
-- **[RESUMEN_CAMBIOS.md](./RESUMEN_CAMBIOS.md)** - Qué se modificó (3 minutos)
-- ⚡ Inicio rápido (5 minutos)
-- 🐳 Configuración de Docker
-- 🎯 Backend NestJS
-- 📡 Servicios disponibles
-- 🛠️ Comandos útiles
-- 🆘 Troubleshooting
-- 🔐 Checklist de producción
+| Necesidad | Documento |
+|-----------|-----------|
+| Levantar el entorno por primera vez | [QUICKSTART.md](./QUICKSTART.md) |
+| Entender el flujo de desarrollo con Docker | [DEV_WORKFLOW.md](./DEV_WORKFLOW.md) ⭐ |
+| Entender la arquitectura del código | [ARCHITECTURE_USERS.md](./ARCHITECTURE_USERS.md) ⭐ |
+| Referencia rápida de comandos `make` | [MAKEFILE_CHEATSHEET.md](./MAKEFILE_CHEATSHEET.md) |
+| Setup detallado de Docker | [DOCKER_SETUP.md](./DOCKER_SETUP.md) |
+| Guía completa (todo en uno) | [GUIA_COMPLETA.md](./GUIA_COMPLETA.md) |
 
 ---
 
 ## 📑 Documentación por Tema
 
-Si prefieres archivos separados, aquí están organizados por tema:
+### 🐳 Docker & Flujo de Desarrollo
+- [DEV_WORKFLOW.md](./DEV_WORKFLOW.md) — **Hot-reload, cuándo hacer rebuild, comandos del día a día** ⭐
+- [DOCKER_SETUP.md](./DOCKER_SETUP.md) — Setup detallado de Docker y servicios
+- [QUICKSTART.md](./QUICKSTART.md) — Inicio rápido (5 min)
 
-### Docker & DevOps
-- [DOCKER_SETUP.md](./DOCKER_SETUP.md) - Setup detallado de Docker
-- [QUICKSTART.md](./QUICKSTART.md) - Inicio rápido Docker (5 min)
-- [ARQUITECTURA_DOCKER.md](./ARQUITECTURA_DOCKER.md) - 🆕 Explicación de la arquitectura, contenedores, healthchecks
-- [MAKEFILE_DOCKER_COMMANDS.md](./MAKEFILE_DOCKER_COMMANDS.md) - 🆕 Por qué comandos se ejecutan en contenedor Docker
+### 🏛️ Arquitectura
+- [ARCHITECTURE_USERS.md](./ARCHITECTURE_USERS.md) — **Arquitectura hexagonal + CQRS del módulo Users** ⭐
 
-### Backend NestJS
-- [QUICK_START.md](./QUICK_START.md) - Setup completo NestJS
-- [SETUP_NESTJS_COMPLETE.md](./SETUP_NESTJS_COMPLETE.md) - Detalles técnicos
-- [INSTALLATION_SUMMARY.md](./INSTALLATION_SUMMARY.md) - Resumen instalación
-- [PREFIX_API_EXPLICACION.md](./PREFIX_API_EXPLICACION.md) - 🆕 Explicación del prefijo global /api en todos los endpoints
+### 🚀 Backend NestJS
+- [README-DEV.md](./README-DEV.md) — Guía de desarrollo NestJS
+- [SETUP_NESTJS_COMPLETE.md](./SETUP_NESTJS_COMPLETE.md) — Detalles técnicos de instalación
+- [INSTALLATION_SUMMARY.md](./INSTALLATION_SUMMARY.md) — Resumen de instalación
 
-### API & URLs
-- [API_URLS.md](./API_URLS.md) - Endpoints y URLs disponibles
+### 📡 API
+- [API_URLS.md](./API_URLS.md) — Endpoints disponibles
 
-### Makefile
-- [MAKEFILE_CHEATSHEET.md](./MAKEFILE_CHEATSHEET.md) - Comandos make
-- [MAKEFILE_NESTJS.md](./MAKEFILE_NESTJS.md) - Comandos NestJS específicos
-- [MAKEFILE_DOCKER_COMMANDS.md](./MAKEFILE_DOCKER_COMMANDS.md) - 🆕 Por qué comandos se ejecutan en contenedor Docker
-- [VER_LOGS_COMPILACION.md](./VER_LOGS_COMPILACION.md) - 🆕 Cómo ver logs de compilación de NestJS
-
-### 🆘 Troubleshooting & Soluciones
-- [SOLUCION_ECONNREFUSED_MYSQL.md](./SOLUCION_ECONNREFUSED_MYSQL.md) - Error ECONNREFUSED: No puede conectar a MySQL (solución: DB_HOST=mysql)
-- [SOLUCION_HEALTHCHECK_APP.md](./SOLUCION_HEALTHCHECK_APP.md) - 🆕 Contenedor app unhealthy (solución: wget + 127.0.0.1 + start_period=60s)
+### ⚙️ Makefile
+- [MAKEFILE_CHEATSHEET.md](./MAKEFILE_CHEATSHEET.md) — Referencia rápida de comandos
+- [MAKEFILE_NESTJS.md](./MAKEFILE_NESTJS.md) — Comandos NestJS específicos
 
 ---
 
-## 🎬 Cómo Empezar
+## 🎬 Flujos comunes
 
-### Opción 1: Rápido (5 minutos)
-Lee [GUIA_COMPLETA.md](./GUIA_COMPLETA.md) → "Inicio Rápido (5 minutos)"
-
-### Opción 2: Paso a paso
-1. Lee [DOCKER_SETUP.md](./DOCKER_SETUP.md) para Docker
-2. Lee [QUICK_START.md](./QUICK_START.md) para NestJS
-3. Consulta [API_URLS.md](./API_URLS.md) para los endpoints
-
-### Opción 3: Referencia rápida
-Abre [GUIA_COMPLETA.md](./GUIA_COMPLETA.md) y busca la sección que necesites
-
----
-
-## 📊 Tabla Comparativa
-
-| Necesidad | Archivo | Tiempo |
-|-----------|---------|--------|
-| "Quiero empezar YA" | GUIA_COMPLETA.md | 5 min |
-| "Quiero entender Docker" | DOCKER_SETUP.md | 15 min |
-| "Quiero entender NestJS" | QUICK_START.md | 15 min |
-| "Necesito referencias rápidas" | GUIA_COMPLETA.md | Variable |
-| "Quiero ver todos los comandos" | MAKEFILE_CHEATSHEET.md | 5 min |
-
----
-
-## ✅ Checklist de Verificación
-
-Después de leer la documentación, verifica que puedas:
-
-- [ ] Docker está corriendo: `docker-compose ps`
-- [ ] MySQL está accesible: http://localhost:8080
-- [ ] NestJS está en desarrollo: `npm run dev`
-- [ ] Health check responde: http://localhost:3000/health
-- [ ] Swagger abierto: http://localhost:3000/api/docs
-- [ ] Puedes crear un módulo: `nest generate module modules/users`
-
----
-
-## 🆘 Si Algo Falla
-
-1. Abre [GUIA_COMPLETA.md](./GUIA_COMPLETA.md)
-2. Ve a la sección "Troubleshooting"
-3. Busca el error que tienes
-
----
-
-## 📝 Estructura de Archivos
-
+### Primera vez en el proyecto
+```bash
+# 1. Leer DEV_WORKFLOW.md para entender el entorno
+# 2. Ejecutar:
+cp .env.example .env
+bash docker/generate-ssl.sh
+make up-dev
 ```
-docs/
-├── README.md                      ← Índice general
-├── DOCUMENTACION_INDEX.md         ← Este archivo
-├── GUIA_COMPLETA.md              ← TODO EN UNO (recomendado)
-├── DOCKER_SETUP.md               ← Docker específico
-├── QUICKSTART.md                 ← Quick start Docker
-├── QUICK_START.md                ← Quick start NestJS
-├── SETUP_NESTJS_COMPLETE.md      ← Detalles NestJS
-├── INSTALLATION_SUMMARY.md       ← Resumen instalación
-├── API_URLS.md                   ← URLs y endpoints
-├── MAKEFILE_CHEATSHEET.md        ← Comandos make
-├── MAKEFILE_NESTJS.md            ← Comandos NestJS
-└── SOLUCION_ECONNREFUSED_MYSQL.md  ← 🆕 Solución error conexión BD
+
+### Desarrollo diario
+```bash
+make up-dev                                    # levantar
+make logs-service SERVICE=app-nestjs-dev       # ver logs
+make down                                      # parar
 ```
+
+### Añadir un paquete npm
+```bash
+npm install <paquete>       # en el host para actualizar package.json
+make rebuild-dev            # reconstruir imagen del contenedor
+```
+
+### Entender un archivo de código
+```
+→ Leer ARCHITECTURE_USERS.md para entender en qué capa está cada archivo
+  y qué responsabilidad tiene.
+```
+
+---
+
+## 📊 Referencia rápida
+
+| Necesidad | Documento | Tiempo |
+|-----------|-----------|--------|
+| Levantar el entorno | [QUICKSTART.md](./QUICKSTART.md) | 5 min |
+| Hot-reload / flujo dev | [DEV_WORKFLOW.md](./DEV_WORKFLOW.md) | 10 min |
+| Entender la arquitectura | [ARCHITECTURE_USERS.md](./ARCHITECTURE_USERS.md) | 20 min |
+| Comandos `make` | [MAKEFILE_CHEATSHEET.md](./MAKEFILE_CHEATSHEET.md) | 5 min |
+| Setup detallado Docker | [DOCKER_SETUP.md](./DOCKER_SETUP.md) | 15 min |
+| Todo en uno | [GUIA_COMPLETA.md](./GUIA_COMPLETA.md) | — |
 
 ---
 

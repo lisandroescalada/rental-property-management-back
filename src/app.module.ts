@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { getDatabaseConfig, getJwtConfig } from '@config';
 import { HealthModule } from '@modules';
+import { UsersModule } from './users/infrastructure/modules/users.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { HealthModule } from '@modules';
 
     // Modules
     HealthModule,
+    UsersModule,
   ],
   controllers: [],
   providers: [],

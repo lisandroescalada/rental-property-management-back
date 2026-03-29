@@ -10,7 +10,7 @@ export const getDatabaseConfig = (
   username: configService.get<string>('DB_USER', 'root'),
   password: configService.get<string>('DB_PASSWORD', ''),
   database: configService.get<string>('DB_NAME', 'app_db'),
-  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+  entities: [__dirname + '/../**/*.orm-entity{.ts,.js}'],
   synchronize: configService.get<string>('NODE_ENV') !== 'production',
   autoLoadEntities: true,
   logging: configService.get<boolean>('DB_LOGGING', false),
@@ -24,11 +24,9 @@ export const databaseConfig = {
   username: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'app_db',
-  entities: ['src/**/*.entity.ts'],
+  entities: ['src/**/*.orm-entity.ts'],   // ← same convention as ormconfig.ts
   migrations: ['src/database/migrations/*.ts'],
-  seeds: ['src/database/seeds/*.ts'],
-  synchronize: process.env.NODE_ENV !== 'production',
+  synchronize: false,
   autoLoadEntities: true,
   logging: process.env.DB_LOGGING === 'true',
 };
-
