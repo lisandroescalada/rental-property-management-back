@@ -2,6 +2,7 @@ import { User } from "../entities/user.entity"
 
 export interface UserRepository {
     findAll(pagination: { page: number, limit: number }): Promise<User[]>
+    count(): Promise<number>
     findById(id: bigint): Promise<User | null>
     findByEmail(email: string): Promise<User | null>
     save(user: User): Promise<void>

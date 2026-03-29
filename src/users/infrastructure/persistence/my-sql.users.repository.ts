@@ -23,6 +23,10 @@ export class MySqlUsersRepository implements UserRepository {
         return ormEntities.map(UserMapper.toDomain)
     }
 
+    async count(): Promise<number> {
+        return this.ormRepository.count()
+    }
+
     async findById(id: bigint): Promise<User | null> {
         const ormEntity = await this.ormRepository.findOneBy({ id })
         return ormEntity ? UserMapper.toDomain(ormEntity) : null

@@ -3,6 +3,7 @@ import { FindByIdUserQuery } from './find-by-id.user.query'
 import { InMemoryUsersRepository } from 'src/users/infrastructure/persistence/in-memory.users.repository'
 import { UserNotFoundError } from 'src/users/domain/errors/user-not-found.error'
 import { User } from 'src/users/domain/entities/user.entity'
+import { UserResponseDto } from 'src/users/infrastructure/dto/user-response.dto'
 
 describe('FindByIdUserHandler', () => {
     let handler: FindByIdUserHandler
@@ -17,7 +18,7 @@ describe('FindByIdUserHandler', () => {
         repository.clear()
     })
 
-    it('returns the user when it exists in the repository', async () => {
+    it('returns a UserResponseDto when the user exists', async () => {
         // Arrange
         const userToSave = User.create({
             name: 'Adrian García',
@@ -30,9 +31,21 @@ describe('FindByIdUserHandler', () => {
         const result = await handler.execute(new FindByIdUserQuery(1n))
 
         // Assert
-        expect(result).toBeInstanceOf(User)
-        expect(result.id).toBe(1n)
+        expect(result).toBeInstanceOf(UserResponseDto)
+        expect(result.id).toBe('1')
         expect(result.email).toBe('adrian@example.com')
+    })
+
+    it('does not expose sensitive fields (password, remember_token)', async () => {
+        // Arrange
+        await repository.save(User.create({ name: 'Test', email: 't@test.com', hashedPassword: 'secret' }))
+
+        // Act
+        const result = await handler.execute(new FindByIdUserQuery(1n))
+
+        // Assert
+        expect((result as any).password).toBeUndefined()
+        expect((result as any).remember_token).toBeUndefined()
     })
 
     it('throws UserNotFoundError when the user does not exist', async () => {
@@ -44,7 +57,7 @@ describe('FindByIdUserHandler', () => {
     it('includes the user id in the error message', async () => {
         await expect(
             handler.execute(new FindByIdUserQuery(42n))
-        ).rejects.toThrow('User with id 42 not found')
+        ).rejects.toThrow("User with id '42' not found")
     })
 
     it('returns different users for different ids', async () => {

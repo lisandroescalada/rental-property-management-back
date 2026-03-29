@@ -1,7 +1,8 @@
 import { Query } from '@nestjs/cqrs'
-import { User } from 'src/users/domain/entities/user.entity'
+import { PaginatedResponseDto } from 'src/users/infrastructure/dto/paginated-response.dto'
+import { UserResponseDto } from 'src/users/infrastructure/dto/user-response.dto'
 
-export class FindAllUsersQuery extends Query<User[]> {
+export class FindAllUsersQuery extends Query<PaginatedResponseDto<UserResponseDto>> {
     constructor(
         public readonly page: number,
         public readonly limit: number,

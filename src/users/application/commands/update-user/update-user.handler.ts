@@ -14,7 +14,7 @@ export class UpdateUserHandler implements ICommandHandler<UpdateUserCommand> {
 
     async execute(command: UpdateUserCommand): Promise<void> {
         const existing = await this.userRepository.findById(command.id)
-        if (!existing) throw new UserNotFoundError(`User with id ${command.id} not found`)
+        if (!existing) throw new UserNotFoundError(command.id)
 
         const updated = existing.updateProfile({
             name: command.name,

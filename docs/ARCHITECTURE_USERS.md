@@ -29,33 +29,53 @@ código en capas concéntricas con una regla fundamental:
 ```
 src/users/
 │
-├── domain/                         ← 🔵 CAPA DE DOMINIO
+├── domain/                               ← 🔵 CAPA DE DOMINIO
 │   ├── entities/
-│   │   └── user.entity.ts          ← Entidad de dominio (puro TypeScript)
+│   │   └── user.entity.ts                ← Entidad de dominio (puro TypeScript)
 │   ├── errors/
-│   │   └── user-not-found.error.ts ← Errores de dominio
+│   │   ├── user-not-found.error.ts       ← Error de dominio (recibe bigint id)
+│   │   └── user-already-exists.error.ts  ← Error de dominio (recibe string email)
 │   └── repositories/
-│       ├── user.repository.ts      ← Puerto (interfaz, contrato)
-│       └── user.repository.token.ts← Token de inyección (Symbol)
+│       ├── user.repository.ts            ← Puerto (interfaz, contrato)
+│       └── user.repository.token.ts      ← Token de inyección (Symbol)
 │
-├── application/                    ← 🟡 CAPA DE APLICACIÓN
+├── application/                          ← 🟡 CAPA DE APLICACIÓN
+│   ├── commands/
+│   │   ├── create-user/
+│   │   │   ├── create-user.command.ts
+│   │   │   └── create-user.handler.ts
+│   │   ├── update-user/
+│   │   │   ├── update-user.command.ts
+│   │   │   └── update-user.handler.ts
+│   │   └── delete-user/
+│   │       ├── delete-user.command.ts
+│   │       └── delete-user.handler.ts
 │   └── queries/
+│       ├── find-all-users/
+│       │   ├── find-all.users.query.ts   ← Query<PaginatedResponseDto<UserResponseDto>>
+│       │   └── find-all.users.handler.ts ← usa Assembler, devuelve DTO paginado
 │       └── find-by-id-user/
-│           ├── find-by-id.user.query.ts   ← Query CQRS (objeto inmutable)
-│           └── find-by-id.user.handler.ts ← QueryHandler (caso de uso)
+│           ├── find-by-id.user.query.ts  ← Query<UserResponseDto>
+│           └── find-by-id.user.handler.ts← usa Assembler, devuelve DTO
 │
-└── infrastructure/                 ← 🔴 CAPA DE INFRAESTRUCTURA
+└── infrastructure/                       ← 🔴 CAPA DE INFRAESTRUCTURA
+    ├── assemblers/
+    │   └── user.assembler.ts             ← ⭐ Transforma User → DTO de respuesta
     ├── controllers/
-    │   └── users.controller.ts     ← Adaptador HTTP (entrada)
+    │   └── users.controller.ts           ← Adaptador HTTP (entrada)
     ├── dto/
-    │   └── find-by-id.user.dto.ts  ← Validación de entrada HTTP
+    │   ├── create-user.dto.ts            ← Validación de entrada (POST)
+    │   ├── update-user.dto.ts            ← Validación de entrada (PATCH)
+    │   ├── pagination-query.dto.ts       ← Validación de entrada (GET paginado)
+    │   ├── user-response.dto.ts          ← ⭐ Contrato de salida (un usuario)
+    │   └── paginated-response.dto.ts     ← ⭐ Contrato de salida (lista paginada)
     ├── modules/
-    │   └── users.module.ts         ← Registro DI de NestJS
+    │   └── users.module.ts               ← Registro DI de NestJS
     └── persistence/
-        ├── user.orm-entity.ts      ← Modelo TypeORM (decoradores ORM aquí)
-        ├── user.mapper.ts          ← Traduce dominio ↔ persistencia
-        ├── my-sql.users.repository.ts     ← Adaptador MySQL (salida)
-        └── in-memory.users.repository.ts  ← Adaptador en memoria (tests)
+        ├── user.orm-entity.ts            ← Modelo TypeORM (decoradores ORM aquí)
+        ├── user.mapper.ts                ← Traduce dominio ↔ persistencia
+        ├── my-sql.users.repository.ts    ← Adaptador MySQL (salida)
+        └── in-memory.users.repository.ts ← Adaptador en memoria (tests)
 ```
 
 ---
@@ -93,6 +113,7 @@ export class User {
     // Comportamiento de dominio
     get isEmailVerified(): boolean { ... }
     verifyEmail(date: Date): User { ... }  // retorna nueva instancia (inmutabilidad)
+    updateProfile(params: { name?: string; email?: string }): User { ... }
 }
 ```
 
@@ -107,7 +128,9 @@ export class User {
 // Contrato que el dominio exige. No sabe si es MySQL, MongoDB, o memoria RAM.
 export interface UserRepository {
     findAll(pagination: { page: number; limit: number }): Promise<User[]>
+    count(): Promise<number>   // ← necesario para construir la paginación real
     findById(id: bigint): Promise<User | null>
+    findByEmail(email: string): Promise<User | null>
     save(user: User): Promise<void>
     update(id: bigint, user: User): Promise<void>
     delete(id: bigint): Promise<void>
@@ -130,9 +153,11 @@ runtime). El Symbol actúa como identificador estable en tiempo de ejecución.
 #### `user-not-found.error.ts` — Error de dominio
 
 ```typescript
+// Recibe el id directamente y construye el mensaje internamente.
+// Consistente con UserAlreadyExistsError que recibe el email.
 export class UserNotFoundError extends Error {
-    constructor(message: string) {
-        super(message)
+    constructor(id: bigint) {
+        super(`User with id '${id}' not found`)
         this.name = 'UserNotFoundError'
     }
 }
@@ -149,15 +174,15 @@ Orquesta el dominio para ejecutar una operación concreta. No contiene lógica
 de negocio propia: eso es responsabilidad del dominio.
 
 Este módulo usa **CQRS** (`@nestjs/cqrs`): las operaciones se dividen en:
-- **Query** → lee datos, no modifica estado
-- **Command** → modifica estado, no retorna datos de negocio
+- **Query** → lee datos, usa el **Assembler** y retorna un DTO de respuesta
+- **Command** → modifica estado, retorna `void`
 
 #### `find-by-id.user.query.ts` — El objeto Query
 
 ```typescript
-// Objeto inmutable que representa "la intención de buscar un usuario por id".
-// El tipo genérico Query<User> indica qué tipo retornará el handler.
-export class FindByIdUserQuery extends Query<User> {
+// El tipo genérico indica que el handler devolverá un UserResponseDto,
+// no la entidad de dominio (que nunca sale de la capa de aplicación).
+export class FindByIdUserQuery extends Query<UserResponseDto> {
     constructor(public readonly userId: bigint) {
         super()
     }
@@ -167,19 +192,19 @@ export class FindByIdUserQuery extends Query<User> {
 #### `find-by-id.user.handler.ts` — El QueryHandler (caso de uso)
 
 ```typescript
-@QueryHandler(FindByIdUserQuery)                    // registra el handler en el bus
-export class FindByIdUserHandler implements IQueryHandler<FindByIdUserQuery, User> {
+@QueryHandler(FindByIdUserQuery)
+export class FindByIdUserHandler implements IQueryHandler<FindByIdUserQuery, UserResponseDto> {
     constructor(
-        @Inject(USER_REPOSITORY_TOKEN)              // inyecta por token, no por clase concreta
-        private readonly userRepository: UserRepository  // depende de la interfaz (puerto)
+        @Inject(USER_REPOSITORY_TOKEN)
+        private readonly userRepository: UserRepository  // depende del PUERTO
     ) {}
 
-    async execute(query: FindByIdUserQuery): Promise<User> {
-        const user = await this.userRepository.findById(query.userId)  // usa el puerto
+    async execute(query: FindByIdUserQuery): Promise<UserResponseDto> {
+        const user = await this.userRepository.findById(query.userId)
 
-        if (!user) throw new UserNotFoundError(...)  // error de dominio, no HttpException
+        if (!user) throw new UserNotFoundError(query.userId)  // error de dominio
 
-        return user
+        return UserAssembler.toDto(user)  // ← transforma antes de devolver
     }
 }
 ```
@@ -187,8 +212,28 @@ export class FindByIdUserHandler implements IQueryHandler<FindByIdUserQuery, Use
 **Flujo del handler:**
 1. Recibe el `FindByIdUserQuery` del bus.
 2. Llama al puerto `UserRepository.findById()`.
-3. Si no existe, lanza `UserNotFoundError` (dominio).
-4. Retorna la entidad de dominio `User`.
+3. Si no existe, lanza `UserNotFoundError` con el id (dominio).
+4. Usa `UserAssembler.toDto()` para transformar la entidad en un DTO seguro.
+5. Retorna `UserResponseDto` (nunca la entidad de dominio cruda).
+
+#### `find-all.users.handler.ts` — Paginación real
+
+```typescript
+@QueryHandler(FindAllUsersQuery)
+export class FindAllUsersHandler
+    implements IQueryHandler<FindAllUsersQuery, PaginatedResponseDto<UserResponseDto>> {
+
+    async execute(query: FindAllUsersQuery): Promise<PaginatedResponseDto<UserResponseDto>> {
+        // Consulta datos y total en paralelo (una sola ida al repositorio)
+        const [users, total] = await Promise.all([
+            this.userRepository.findAll({ page: query.page, limit: query.limit }),
+            this.userRepository.count(),
+        ])
+
+        return UserAssembler.toPaginatedDto(users, total, query.page, query.limit)
+    }
+}
+```
 
 ---
 
@@ -197,6 +242,76 @@ export class FindByIdUserHandler implements IQueryHandler<FindByIdUserQuery, Use
 Implementa los puertos definidos en el dominio y conecta el sistema con el
 mundo exterior (HTTP, MySQL, etc.).
 
+#### `user-response.dto.ts` — Contrato de salida (un usuario)
+
+```typescript
+// Define exactamente qué campos se exponen al cliente.
+// Campos sensibles (password, remember_token, settings) nunca aparecen aquí.
+export class UserResponseDto {
+    id!: string                    // bigint serializado como string (seguro en JSON)
+    name!: string
+    email!: string
+    email_verified_at!: Date | null
+    provider!: string | null
+    receive_notifications!: number
+    created_at!: Date | undefined
+    updated_at!: Date | undefined
+}
+```
+
+#### `paginated-response.dto.ts` — Contrato de salida (lista paginada)
+
+```typescript
+// Respuesta estándar para cualquier listado paginado.
+// Genérico: PaginatedResponseDto<UserResponseDto>
+export class PaginatedResponseDto<T> {
+    data!: T[]          // items de la página actual
+    total!: number      // total de registros en la BD
+    page!: number       // página actual
+    limit!: number      // tamaño de página
+    totalPages!: number // Math.ceil(total / limit)
+}
+```
+
+#### `user.assembler.ts` — El transformador dominio → DTO ⭐
+
+```typescript
+// Único responsable de convertir entidades de dominio en DTOs de respuesta.
+// Centraliza qué datos se exponen y cómo se formatean.
+export class UserAssembler {
+    // User → UserResponseDto (para findById)
+    static toDto(user: User): UserResponseDto {
+        const dto = new UserResponseDto()
+        dto.id    = user.id.toString()  // bigint → string
+        dto.name  = user.name
+        dto.email = user.email
+        // ...resto de campos públicos (sin password, sin remember_token)
+        return dto
+    }
+
+    // User[] + metadatos → PaginatedResponseDto<UserResponseDto> (para findAll)
+    static toPaginatedDto(
+        users: User[],
+        total: number,
+        page: number,
+        limit: number,
+    ): PaginatedResponseDto<UserResponseDto> {
+        const dto = new PaginatedResponseDto<UserResponseDto>()
+        dto.data       = users.map(UserAssembler.toDto)
+        dto.total      = total
+        dto.page       = page
+        dto.limit      = limit
+        dto.totalPages = Math.ceil(total / limit)
+        return dto
+    }
+}
+```
+
+**Por qué un Assembler y no hacerlo en el mapper:**
+- El `UserMapper` traduce entre **dominio ↔ persistencia** (ORM entity).
+- El `UserAssembler` traduce entre **dominio ↔ presentación** (DTO de respuesta).
+- Son responsabilidades distintas con distintos destinos.
+
 #### `users.controller.ts` — Adaptador de entrada (HTTP)
 
 ```typescript
@@ -204,36 +319,77 @@ mundo exterior (HTTP, MySQL, etc.).
 export class UsersController {
     constructor(
         private readonly commandBus: CommandBus,
-        private readonly queryBus: QueryBus
+        private readonly queryBus: QueryBus,
     ) {}
 
     @Get(':id')
-    async findById(@Param() dto: FindByIdUserDto) {
+    findById(@Param('id', ParseIntPipe) id: number): Promise<UserResponseDto> {
         // El controlador solo despacha al bus. No contiene lógica.
+        // El tipo de retorno explicita el contrato de la API.
+        return this.queryBus.execute(new FindByIdUserQuery(BigInt(id)))
+    }
+
+    @Get()
+    findAll(@Query() pagination: PaginationQueryDto): Promise<PaginatedResponseDto<UserResponseDto>> {
         return this.queryBus.execute(
-            new FindByIdUserQuery(BigInt(dto.userId))
+            new FindAllUsersQuery(pagination.page, pagination.limit),
         )
     }
 }
 ```
 
-El controlador es un **adaptador de entrada**: convierte una petición HTTP en
-un objeto del dominio (`FindByIdUserQuery`) y lo envía al bus de CQRS.
-
-#### `find-by-id.user.dto.ts` — Validación de la petición HTTP
+#### `create-user.dto.ts` — Validación de la petición HTTP (POST)
 
 ```typescript
-export class FindByIdUserDto {
+export class CreateUserDto {
     @IsNotEmpty()
-    @IsInt()
-    @IsPositive()
-    @Type(() => Number)
-    userId!: number
+    @IsString()
+    @Length(1, 255)
+    name!: string
+
+    @IsNotEmpty()
+    @IsEmail()
+    email!: string
+
+    @IsNotEmpty()
+    @IsString()
+    @Length(8, 255)
+    password!: string
 }
 ```
 
-Los DTOs solo existen en infraestructura. Validan que lo que llega por HTTP
-tiene el formato correcto antes de entrar al sistema.
+#### `update-user.dto.ts` — Validación de la petición HTTP (PATCH)
+
+```typescript
+export class UpdateUserDto {
+    @IsOptional()
+    @IsString()
+    @Length(1, 255)
+    name?: string
+
+    @IsOptional()
+    @IsEmail()
+    email?: string
+
+    // Nota: no incluye password, para evitar envíos accidentales
+}
+```
+
+#### `pagination-query.dto.ts` — Validación de la paginación (GET paginado)
+
+```typescript
+export class PaginationQueryDto {
+    @IsOptional()
+    @IsInt()
+    @IsPositive()
+    page?: number = 1
+
+    @IsOptional()
+    @IsInt()
+    @IsPositive()
+    limit?: number = 10
+}
+```
 
 #### `user.orm-entity.ts` — Modelo de persistencia
 
@@ -253,7 +409,7 @@ export class UserOrmEntity {
 Esta clase es exclusiva de TypeORM. Si mañana cambias a Prisma o MongoDB,
 solo tocas este archivo y el mapper.
 
-#### `user.mapper.ts` — El traductor
+#### `user.mapper.ts` — El traductor ORM ↔ Dominio
 
 ```typescript
 export class UserMapper {
@@ -270,43 +426,45 @@ export class UserMapper {
 ```
 
 Es el **único punto del código** que conoce tanto la entidad de dominio
-como el modelo de persistencia. Actúa como frontera entre las dos representaciones.
+como el modelo de persistencia.
 
 #### `my-sql.users.repository.ts` — Adaptador de salida (MySQL)
 
 ```typescript
 @Injectable()
 export class MySqlUsersRepository implements UserRepository {  // implementa el PUERTO
-    constructor(
-        @InjectRepository(UserOrmEntity)
-        private readonly ormRepository: Repository<UserOrmEntity>  // TypeORM
-    ) {}
+    async findAll(pagination): Promise<User[]> {
+        const entities = await this.ormRepository.find({ skip, take })
+        return entities.map(UserMapper.toDomain)  // devuelve entidades de dominio
+    }
+
+    async count(): Promise<number> {
+        return this.ormRepository.count()  // delegado a TypeORM
+    }
 
     async findById(id: bigint): Promise<User | null> {
-        const orm = await this.ormRepository.findOneBy({ id })  // TypeORM
-        return orm ? UserMapper.toDomain(orm) : null             // devuelve dominio
+        const orm = await this.ormRepository.findOneBy({ id })
+        return orm ? UserMapper.toDomain(orm) : null
     }
     // ...
 }
 ```
-
-El repositorio MySQL **implementa el puerto** del dominio. Habla TypeORM
-internamente pero devuelve entidades de dominio.
 
 #### `users.module.ts` — El cableado (DI)
 
 ```typescript
 @Module({
     imports: [
-        CqrsModule,                              // habilita CommandBus, QueryBus, EventBus
+        CqrsModule,                                // habilita CommandBus, QueryBus
         TypeOrmModule.forFeature([UserOrmEntity]), // registra el repositorio TypeORM
     ],
     controllers: [UsersController],
     providers: [
-        FindByIdUserHandler,                     // handler registrado para el bus CQRS
+        ...QueryHandlers,   // [FindByIdUserHandler, FindAllUsersHandler]
+        ...CommandHandlers, // [CreateUserHandler, UpdateUserHandler, DeleteUserHandler]
         {
-            provide: USER_REPOSITORY_TOKEN,      // cuando alguien pida este token...
-            useClass: MySqlUsersRepository,      // ...inyecta esta implementación
+            provide: USER_REPOSITORY_TOKEN,   // cuando alguien pida este token...
+            useClass: MySqlUsersRepository,   // ...inyecta esta implementación
         },
     ],
 })
@@ -326,14 +484,12 @@ HTTP Request: GET /users/42
         │
         ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ INFRAESTRUCTURA                                                   │
+│ INFRAESTRUCTURA (entrada)                                         │
 │                                                                   │
-│  FindByIdUserDto          ← valida que "42" es un número positivo │
-│  UsersController          ← extrae dto.userId, crea la Query      │
+│  ParseIntPipe             ← valida que "42" es un número positivo │
+│  UsersController          ← crea FindByIdUserQuery(42n)           │
 │         │                                                         │
-│         │  new FindByIdUserQuery(42n)                             │
-│         ▼                                                         │
-│  QueryBus.execute(query)  ← despacha al handler registrado        │
+│         │  queryBus.execute(new FindByIdUserQuery(42n))           │
 └──────────────────────────────────────────────────────────────────┘
         │
         ▼
@@ -342,14 +498,16 @@ HTTP Request: GET /users/42
 │                                                                   │
 │  FindByIdUserHandler.execute(query)                               │
 │         │                                                         │
-│         │  userRepository.findById(42n)   ← llama al PUERTO      │
+│         │  userRepository.findById(42n)     ← llama al PUERTO    │
 │         ▼                                                         │
-│  [si no existe] → throw UserNotFoundError(...)  ← error dominio  │
+│  [si no existe] → throw UserNotFoundError(42n)  ← error dominio  │
+│         │                                                         │
+│         │  UserAssembler.toDto(user)  ← transforma al DTO        │
 └──────────────────────────────────────────────────────────────────┘
         │
         ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ INFRAESTRUCTURA (adaptador de salida)                             │
+│ INFRAESTRUCTURA (salida)                                          │
 │                                                                   │
 │  MySqlUsersRepository.findById(42n)                               │
 │         │                                                         │
@@ -357,11 +515,50 @@ HTTP Request: GET /users/42
 │         ▼                                                         │
 │  UserMapper.toDomain(ormEntity)  ← convierte a entidad dominio   │
 │         │                                                         │
-│         │  return User (entidad de dominio)                       │
+│         │  return User (entidad de dominio, solo internamente)    │
 └──────────────────────────────────────────────────────────────────┘
         │
         ▼
-HTTP Response: 200 { id: 42, name: "...", email: "..." }
+HTTP Response: 200 {
+    "id": "42", "name": "...", "email": "...",
+    "email_verified_at": null, "provider": null,
+    "receive_notifications": 1, "created_at": "...", "updated_at": "..."
+    // ❌ password, remember_token y settings NUNCA aparecen aquí
+}
+```
+
+## Flujo completo de una petición `GET /users?page=1&limit=10`
+
+```
+HTTP Request: GET /users?page=1&limit=10
+        │
+        ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ INFRAESTRUCTURA (entrada)                                         │
+│                                                                   │
+│  PaginationQueryDto       ← valida page y limit (defaults: 1, 10)│
+│  UsersController          ← crea FindAllUsersQuery(1, 10)         │
+└──────────────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ APLICACIÓN                                                        │
+│                                                                   │
+│  FindAllUsersHandler.execute(query)                               │
+│         │                                                         │
+│         │  Promise.all([findAll(...), count()])  ← en paralelo   │
+│         ▼                                                         │
+│  UserAssembler.toPaginatedDto(users, total, page, limit)         │
+└──────────────────────────────────────────────────────────────────┘
+        │
+        ▼
+HTTP Response: 200 {
+    "data": [ { "id": "1", "name": "..." }, ... ],
+    "total": 42,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 5
+}
 ```
 
 ---
@@ -372,20 +569,25 @@ HTTP Response: 200 { id: 42, name: "...", email: "..." }
 users.controller.ts
     │  imports
     ▼
-FindByIdUserQuery  ──────────────────────────▶  [dominio]
-FindByIdUserHandler
+FindByIdUserQuery / FindAllUsersQuery ──────────▶  [aplicación]
+FindByIdUserHandler / FindAllUsersHandler
     │  @Inject(USER_REPOSITORY_TOKEN)
     ▼
-UserRepository (interfaz)  ◀──────────────────  [dominio define el contrato]
+UserRepository (interfaz)  ◀──────────────────────  [dominio define el contrato]
     ▲
     │  implements
-MySqlUsersRepository  ───▶  UserOrmEntity  ────  [infraestructura]
-                      ───▶  UserMapper
+MySqlUsersRepository  ───▶  UserOrmEntity  ─────────  [infraestructura]
+                      ───▶  UserMapper (ORM ↔ dominio)
                       ───▶  TypeORM
 
-✅ El dominio NO importa nada de infraestructura
+UserAssembler  ───▶  User (dominio)  ─────────────── [infra conoce al dominio]
+               ───▶  UserResponseDto
+               ───▶  PaginatedResponseDto
+
+✅ El dominio NO importa nada de infraestructura ni de aplicación
 ✅ La aplicación NO importa nada de infraestructura
 ✅ La infraestructura importa dominio y aplicación (correcto)
+✅ Los datos sensibles (password, remember_token) NUNCA llegan al cliente
 ```
 
 ---
@@ -398,11 +600,22 @@ La separación de capas permite testear sin levantar Docker ni MySQL:
 # Tests de la entidad de dominio (puro TypeScript, sin NestJS)
 # src/users/domain/entities/user.entity.spec.ts
 
-# Tests del handler (usa InMemoryUsersRepository en lugar de MySQL)
+# Tests de los query handlers (usan InMemoryUsersRepository)
 # src/users/application/queries/find-by-id-user/find-by-id.user.handler.spec.ts
+# src/users/application/queries/find-all-users/find-all.users.handler.spec.ts
+
+# Tests de los command handlers
+# src/users/application/commands/create-user/create-user.handler.spec.ts
+# src/users/application/commands/update-user/update-user.handler.spec.ts
+# src/users/application/commands/delete-user/delete-user.handler.spec.ts
 
 npm test  # o: make test (dentro del contenedor)
 ```
+
+Los specs de query handlers verifican también que:
+- El resultado es `instanceof UserResponseDto` / `instanceof PaginatedResponseDto`
+- Los campos sensibles (`password`, `remember_token`) **no están presentes** en la respuesta
+- El `id` se serializa como `string` (no como `bigint`)
 
 El `InMemoryUsersRepository` implementa el mismo puerto `UserRepository`
 que `MySqlUsersRepository`. El handler no sabe cuál de los dos está usando.
@@ -411,24 +624,26 @@ que `MySqlUsersRepository`. El handler no sabe cuál de los dos está usando.
 
 ## Añadir un nuevo caso de uso — checklist
 
-Ejemplo: crear un usuario (`POST /users`)
+Ejemplo: verificar el email de un usuario (`PATCH /users/:id/verify-email`)
 
 ```
 1. DOMINIO (si hace falta)
-   └── user.entity.ts ya tiene User.create() ✅
+   └── user.entity.ts ya tiene verifyEmail(date: Date): User ✅
 
 2. APLICACIÓN
-   ├── src/users/application/commands/create-user/
-   │   ├── create-user.command.ts     ← Command con los datos del nuevo usuario
-   │   └── create-user.handler.ts     ← CommandHandler que llama a repo.save()
+   ├── src/users/application/commands/verify-email/
+   │   ├── verify-email.command.ts     ← Command con el id del usuario
+   │   └── verify-email.handler.ts     ← CommandHandler que llama a repo.update()
 
 3. INFRAESTRUCTURA
-   ├── controllers/users.controller.ts  ← añadir @Post() con CreateUserDto
-   ├── dto/create-user.dto.ts           ← validar name, email, password
-   └── modules/users.module.ts          ← añadir CreateUserHandler a providers
+   ├── controllers/users.controller.ts  ← añadir @Patch(':id/verify-email')
+   └── modules/users.module.ts          ← añadir VerifyEmailHandler a CommandHandlers
 ```
 
-**Regla:** los CommandHandlers no retornan datos de negocio (solo `void` o el
-id asignado). Si necesitas devolver el usuario creado, lanza un evento de dominio
-`UserCreatedEvent` y maneja la proyección en un EventHandler separado.
-
+**Reglas:**
+- Los **CommandHandlers** retornan `void`. No devuelven datos de negocio.
+- Los **QueryHandlers** siempre usan `UserAssembler` antes de retornar. Nunca
+  exponen la entidad de dominio directamente.
+- Si un comando necesita devolver el recurso creado/modificado, lo correcto es
+  que el cliente haga una `Query` posterior, o lanzar un evento de dominio
+  `UserCreatedEvent` manejado por un `EventHandler` separado.

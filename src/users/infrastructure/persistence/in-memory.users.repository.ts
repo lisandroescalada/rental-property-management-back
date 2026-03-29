@@ -11,6 +11,10 @@ export class InMemoryUsersRepository implements UserRepository {
         return all.slice((page - 1) * limit, page * limit)
     }
 
+    async count(): Promise<number> {
+        return this.store.size
+    }
+
     async findById(id: bigint): Promise<User | null> {
         return this.store.get(id) ?? null
     }

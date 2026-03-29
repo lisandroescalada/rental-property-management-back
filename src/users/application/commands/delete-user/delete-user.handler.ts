@@ -14,7 +14,7 @@ export class DeleteUserHandler implements ICommandHandler<DeleteUserCommand> {
 
     async execute(command: DeleteUserCommand): Promise<void> {
         const existing = await this.userRepository.findById(command.id)
-        if (!existing) throw new UserNotFoundError(`User with id ${command.id} not found`)
+        if (!existing) throw new UserNotFoundError(command.id)
 
         await this.userRepository.delete(command.id)
     }
