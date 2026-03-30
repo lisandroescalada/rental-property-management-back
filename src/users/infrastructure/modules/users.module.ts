@@ -5,6 +5,7 @@ import { UsersController } from '../controllers/users.controller';
 import { MySqlUsersRepository } from '../persistence/my-sql.users.repository';
 import { UserOrmEntity } from '../persistence/user.orm-entity';
 import { USER_REPOSITORY_TOKEN } from 'src/users/domain/repositories/user.repository.token';
+import { UserRepository } from 'src/users/domain/repositories/user.repository';
 // Queries
 import { FindByIdUserHandler } from 'src/users/application/queries/find-by-id-user/find-by-id.user.handler';
 import { FindAllUsersHandler } from 'src/users/application/queries/find-all-users/find-all.users.handler';
@@ -12,6 +13,7 @@ import { FindAllUsersHandler } from 'src/users/application/queries/find-all-user
 import { CreateUserHandler } from 'src/users/application/commands/create-user/create-user.handler';
 import { UpdateUserHandler } from 'src/users/application/commands/update-user/update-user.handler';
 import { DeleteUserHandler } from 'src/users/application/commands/delete-user/delete-user.handler';
+import { User } from 'src/users/domain/entities/user.entity';
 
 const QueryHandlers   = [FindByIdUserHandler, FindAllUsersHandler]
 const CommandHandlers = [CreateUserHandler, UpdateUserHandler, DeleteUserHandler]
@@ -30,5 +32,6 @@ const CommandHandlers = [CreateUserHandler, UpdateUserHandler, DeleteUserHandler
             useClass: MySqlUsersRepository,
         },
     ],
+    exports: [USER_REPOSITORY_TOKEN],
 })
 export class UsersModule {}
