@@ -6,6 +6,7 @@ import { PassportModule } from '@nestjs/passport';
 import { getDatabaseConfig, getJwtConfig } from '@config';
 import { HealthModule } from '@modules';
 import { UsersModule } from './users/infrastructure/modules/users.module';
+import { TenantsModule } from './tenants/infrastructure/modules/tenants.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { UsersModule } from './users/infrastructure/modules/users.module';
     // Modules
     HealthModule,
     UsersModule,
+    TenantsModule,
   ],
   controllers: [],
   providers: [],
