@@ -17,10 +17,10 @@ export class TenantResponseDto {
     birthdate!: string
 
     @ApiProperty()
-    observations?: string
+    observations?: string | undefined
 
-    @ApiProperty({ example: 3 })
-    userId?: bigint
+    @ApiProperty({ example: '3' })
+    userId?: string | undefined
 
     @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
     created_at!: Date | undefined

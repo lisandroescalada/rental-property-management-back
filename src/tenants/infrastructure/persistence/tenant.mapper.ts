@@ -1,5 +1,5 @@
 import { TenantOrmEntity } from "./tenant.orm-entity"
-import { Tenant } from "src/tenants/domain/entities/tetant.entity"
+import { Tenant } from "src/tenants/domain/entities/tenant.entity"
 
 export class TenantMapper {
     static toDomain(ormEntity: TenantOrmEntity): Tenant {
@@ -9,8 +9,8 @@ export class TenantMapper {
             ormEntity.phone,
             ormEntity.dni,
             ormEntity.birthdate,
-            ormEntity.observations ?? null,
-            ormEntity.userId ?? null,
+            ormEntity.observations ?? undefined,
+            ormEntity.userId ?? undefined,
             ormEntity.created_at,
             ormEntity.updated_at
         )

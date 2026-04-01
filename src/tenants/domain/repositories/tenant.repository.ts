@@ -1,4 +1,4 @@
-import { Tenant } from "../entities/tetant.entity"
+import { Tenant } from "../entities/tenant.entity"
 
 export interface TenantRepository {
     findAll(pagination: { page: number, limit: number }): Promise<Tenant[]>

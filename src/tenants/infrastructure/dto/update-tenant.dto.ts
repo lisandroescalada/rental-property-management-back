@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
-import { IsDateString, IsOptional, IsString, MinLength } from 'class-validator'
+import { IsDateString, IsOptional, IsPhoneNumber, IsString, MinLength } from 'class-validator'
 
 export class UpdateTenantDto {
     @ApiPropertyOptional({ example: 'John Doe' })
@@ -10,7 +10,7 @@ export class UpdateTenantDto {
 
     @ApiPropertyOptional({ example: '604161117' })
     @IsOptional()
-    @IsString({ message: 'Phone number must be valid.' })
+    @IsPhoneNumber('ES', { message: 'Phone number must be a valid Spanish phone number'  })
     phone?: string
 
     @ApiPropertyOptional({ example: '2006-06-15' })

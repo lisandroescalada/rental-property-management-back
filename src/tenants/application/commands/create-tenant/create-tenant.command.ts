@@ -4,7 +4,7 @@ export class CreateTenantCommand {
         public readonly phone: string,
         public readonly dni: string,
         public readonly birthdate: string,
-        public readonly userId: bigint | null,
+        public readonly observations: string | undefined,
+        public readonly userId: bigint | undefined,
     ) {}
 }
-

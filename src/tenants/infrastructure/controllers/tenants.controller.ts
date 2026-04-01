@@ -24,8 +24,8 @@ import { DeleteTenantCommand } from 'src/tenants/application/commands/delete-ten
 import { FindAllTenantsQuery } from 'src/tenants/application/queries/find-all-tenant/find-all.tenants.query'
 import { FindByIdTenantQuery } from 'src/tenants/application/queries/find-by-id-tenant/find-by-id.tenant.query'
 
-@ApiTags('teants')
-@Controller('teants')
+@ApiTags('tenants')
+@Controller('tenants')
 export class TenantsController {
     constructor(
         private readonly queryBus: QueryBus,
@@ -94,7 +94,7 @@ export class TenantsController {
     })
     @ApiResponse({
         status: 409,
-        description: 'Email already registered'
+        description: 'DNI already registered'
     })
     create(@Body() dto: CreateTenantDto): Promise<void> {
         return this.commandBus.execute(
@@ -102,8 +102,9 @@ export class TenantsController {
                 dto.name,
                 dto.phone,
                 dto.dni,
-                dto.birthdate,
-                null
+                dto.birthdate ,
+                dto.observations ?? undefined,
+                dto.userId ?? undefined
             )
         )
     }

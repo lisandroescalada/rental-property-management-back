@@ -1,8 +1,8 @@
 import { Inject } from "@nestjs/common"
 import { CreateTenantCommand } from "./create-tenant.command"
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs"
-import { Tenant } from "src/tenants/domain/entities/tetant.entity"
-import { TENANT_REPOSITORY_TOKEN, TenantRepository } from "src/tenants/domain/repositories/tenat.repository"
+import { Tenant } from "src/tenants/domain/entities/tenant.entity"
+import { TENANT_REPOSITORY_TOKEN, TenantRepository } from "src/tenants/domain/repositories/tenant.repository"
 
 @CommandHandler(CreateTenantCommand)
 export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand> {
@@ -17,7 +17,8 @@ export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand>
             phone: command.phone,
             dni: command.dni,
             birthdate: command.birthdate,
-            userId: command.userId ?? null
+            observations: command.observations,
+            userId: command.userId
         })
         await this.tenantRepository.save(tenant)
     }

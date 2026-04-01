@@ -1,5 +1,5 @@
-import { Tenant } from "src/tenants/domain/entities/tetant.entity"
-import { TenantRepository } from "src/tenants/domain/repositories/tenat.repository"
+import { Tenant } from "src/tenants/domain/entities/tenant.entity"
+import { TenantRepository } from "src/tenants/domain/repositories/tenant.repository"
 
 export class InMemoryTenantsRepository implements TenantRepository {
     private readonly store = new Map<bigint, Tenant>()

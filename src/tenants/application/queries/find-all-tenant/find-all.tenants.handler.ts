@@ -4,7 +4,7 @@ import { FindAllTenantsQuery } from './find-all.tenants.query'
 import { TenantResponseDto } from 'src/tenants/infrastructure/dto/tenant-response.dto'
 import { TenantAssembler } from 'src/tenants/infrastructure/assemblers/tenant.assembler'
 import { PaginatedResponseDto } from 'src/tenants/infrastructure/dto/paginated-response.dto'
-import { TENANT_REPOSITORY_TOKEN, TenantRepository } from 'src/tenants/domain/repositories/tenat.repository'
+import { TENANT_REPOSITORY_TOKEN, TenantRepository } from 'src/tenants/domain/repositories/tenant.repository'
 
 @QueryHandler(FindAllTenantsQuery)
 export class FindAllTenantsHandler implements IQueryHandler<FindAllTenantsQuery, PaginatedResponseDto<TenantResponseDto>> {

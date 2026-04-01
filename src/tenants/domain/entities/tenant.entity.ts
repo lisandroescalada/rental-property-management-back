@@ -5,8 +5,8 @@ export class Tenant {
         public readonly phone: string,
         public readonly dni: string,
         public readonly birthdate: string,
-        public readonly observations?: string | null,
-        public readonly userId?: bigint | null,
+        public readonly observations?: string | undefined,
+        public readonly userId?: bigint | undefined,
         public readonly created_at?: Date,
         public readonly updated_at?: Date
     ) {}
@@ -16,15 +16,27 @@ export class Tenant {
         phone: string,
         dni: string
         birthdate: string,
-        userId: bigint | null
+        observations?: string | undefined,
+        userId?: bigint | undefined
     }): Tenant {
         if (!params.name.trim()) throw new Error('Tenant name cannot be empty')
+        if (!params.phone.trim()) throw new Error('Tenant phone cannot be empty')
         if (!params.dni.trim()) throw new Error('Tenant DNI cannot be empty')
+        if (!params.birthdate.trim()) throw new Error('Tenant birthdate cannot be empty')
 
         const now = new Date()
 
-        return new Tenant(0n, params.name, params.phone, params.dni,
-            params.birthdate, null, params.userId, now, now)
+        return new Tenant(
+            0n,
+            params.name,
+            params.phone,
+            params.dni,
+            params.birthdate, 
+            params.observations, 
+            params.userId, 
+            now, 
+            now
+        )
     }
 
     static reconstitute(
@@ -33,8 +45,8 @@ export class Tenant {
         phone: string,
         dni: string, 
         birthdate: string,
-        observations?: string | null,
-        userId?: bigint | null,
+        observations?: string | undefined,
+        userId?: bigint | undefined,
         createdAt?: Date,
         updatedAt?: Date
     ): Tenant {
@@ -53,10 +65,10 @@ export class Tenant {
         const newPhone = params.phone !== undefined ? params.phone.trim() : this.phone
 
         if (newName.length === 0) {
-            throw new Error('User name cannot be empty')
+            throw new Error('Tenant name cannot be empty')
         }
         if (newPhone.length === 0) {
-            throw new Error('User phone cannot be empty')
+            throw new Error('Tenant phone cannot be empty')
         }
 
         return Tenant.reconstitute(

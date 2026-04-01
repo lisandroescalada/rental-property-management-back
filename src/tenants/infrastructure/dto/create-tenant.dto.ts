@@ -19,10 +19,10 @@ export class CreateTenantDto {
 
     @IsOptional()
     @IsString()
-    observations?: string
+    observations?: string | undefined
 
     // user_id: se valida en T-2 cuando se conecte con UserRepository
     @IsOptional()
     @Transform(({ value }) => BigInt(value))
-    userId?: bigint
+    userId?: bigint | undefined
 }

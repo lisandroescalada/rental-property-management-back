@@ -2,7 +2,7 @@ import { Inject } from '@nestjs/common'
 import { UpdateTenantCommand } from './update-tenant.command'
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
 import { TenantNotFoundError } from 'src/tenants/domain/excepcions/tenant-not-found.exception'
-import { TENANT_REPOSITORY_TOKEN, TenantRepository } from 'src/tenants/domain/repositories/tenat.repository'
+import { TENANT_REPOSITORY_TOKEN, TenantRepository } from 'src/tenants/domain/repositories/tenant.repository'
 
 @CommandHandler(UpdateTenantCommand)
 export class UpdateTenantHandler implements ICommandHandler<UpdateTenantCommand> {

@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common'
 import { TenantMapper } from './tenant.mapper'
 import { InjectRepository } from '@nestjs/typeorm'
 import { TenantOrmEntity } from './tenant.orm-entity'
-import { Tenant } from 'src/tenants/domain/entities/tetant.entity'
-import { TenantRepository } from 'src/tenants/domain/repositories/tenat.repository'
+import { Tenant } from 'src/tenants/domain/entities/tenant.entity'
+import { TenantRepository } from 'src/tenants/domain/repositories/tenant.repository'
 
 @Injectable()
 export class MySqlTenantsRepository implements TenantRepository {
