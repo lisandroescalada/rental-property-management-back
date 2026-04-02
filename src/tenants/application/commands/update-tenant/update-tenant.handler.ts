@@ -13,14 +13,15 @@ export class UpdateTenantHandler implements ICommandHandler<UpdateTenantCommand>
 
     async execute(command: UpdateTenantCommand): Promise<void> {
         const existing = await this.tenantRepository.findById(command.id)
+
         if (!existing) throw new TenantNotFoundError(command.id)
 
         const updated = existing.updateProfile({
-            name: command.name,
-            phone: command.phone,
-            dni: command.dni,
-            birthdate: command.birthdate,
-            observations: command.observations
+            name: command.name ?? existing.name,
+            phone: command.phone ?? existing.phone,
+            dni: command.dni ?? existing.dni,
+            birthdate: command.birthdate ?? existing.birthdate,
+            observations: command.observations ?? existing.observations
         })
 
         await this.tenantRepository.update(command.id, updated)

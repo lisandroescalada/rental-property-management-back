@@ -24,7 +24,7 @@ import { DeleteTenantCommand } from 'src/tenants/application/commands/delete-ten
 import { FindAllTenantsQuery } from 'src/tenants/application/queries/find-all-tenant/find-all.tenants.query'
 import { FindByIdTenantQuery } from 'src/tenants/application/queries/find-by-id-tenant/find-by-id.tenant.query'
 
-@ApiTags('tenants')
+@ApiTags('Tenants')
 @Controller('tenants')
 export class TenantsController {
     constructor(
@@ -121,7 +121,7 @@ export class TenantsController {
     })
     @ApiResponse({
         status: 204,
-        description: 'tenant updated successfully'
+        description: 'Tenant updated successfully'
     })
     @ApiResponse({
         status: 400,
@@ -129,7 +129,7 @@ export class TenantsController {
     })
     @ApiResponse({
         status: 404,
-        description: 'tenant not found'
+        description: 'Tenant not found'
     })
     update(
         @Param('id', ParseIntPipe) id: number,
@@ -137,11 +137,12 @@ export class TenantsController {
     ): Promise<void> {
         return this.commandBus.execute(
             new UpdateTenantCommand(
-                // Adaptar
                 BigInt(id),
                 dto.name,
                 dto.phone,
-                dto.birthdate
+                dto.dni,
+                dto.birthdate,
+                dto.observations
             )
         )
     }
