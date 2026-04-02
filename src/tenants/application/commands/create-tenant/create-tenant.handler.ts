@@ -1,8 +1,8 @@
-import { Inject } from "@nestjs/common"
-import { CreateTenantCommand } from "./create-tenant.command"
-import { CommandHandler, ICommandHandler } from "@nestjs/cqrs"
-import { Tenant } from "src/tenants/domain/entities/tenant.entity"
-import { TENANT_REPOSITORY_TOKEN, TenantRepository } from "src/tenants/domain/repositories/tenant.repository"
+import { Inject } from '@nestjs/common'
+import { CreateTenantCommand } from './create-tenant.command'
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
+import { Tenant } from 'src/tenants/domain/entities/tenant.entity'
+import { TENANT_REPOSITORY_TOKEN, TenantRepository } from 'src/tenants/domain/repositories/tenant.repository'
 
 @CommandHandler(CreateTenantCommand)
 export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand> {

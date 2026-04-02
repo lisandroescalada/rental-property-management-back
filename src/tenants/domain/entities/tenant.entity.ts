@@ -59,10 +59,15 @@ export class Tenant {
     updateProfile(params: {
         name?: string
         phone?: string
+        dni?: string
         birthdate?: string
+        observations?: string | undefined
     }): Tenant {
         const newName = params.name !== undefined ? params.name.trim() : this.name
         const newPhone = params.phone !== undefined ? params.phone.trim() : this.phone
+        const newDni = params.dni !== undefined ? params.dni.trim() : this.dni
+        const newBirthdate = params.birthdate !== undefined ? params.birthdate.trim() : this.birthdate
+        const newObservations = params.observations !== undefined ? params.observations.trim() : this.observations
 
         if (newName.length === 0) {
             throw new Error('Tenant name cannot be empty')
@@ -71,13 +76,29 @@ export class Tenant {
             throw new Error('Tenant phone cannot be empty')
         }
 
+        if (newPhone.length === 0) {
+            throw new Error('Tenant phone cannot be empty')
+        }
+
+        if (newDni.length === 0) {
+            throw new Error('Tenant DNI cannot be empty')
+        }
+
+        if (newBirthdate.length === 0) {
+            throw new Error('Tenant birthdate cannot be empty')
+        }
+
+        if (newObservations !== undefined && newObservations.length === 0) {
+            throw new Error('Tenant observations cannot be empty if provided')
+        }
+
         return Tenant.reconstitute(
             this.id,
             newName,
             newPhone,
-            this.dni,
-            params.birthdate ?? this.birthdate,
-            this.observations,
+            newDni,
+            newBirthdate,
+            newObservations,
             this.userId,
             this.created_at,
             new Date(),

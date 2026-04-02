@@ -18,7 +18,9 @@ export class UpdateTenantHandler implements ICommandHandler<UpdateTenantCommand>
         const updated = existing.updateProfile({
             name: command.name,
             phone: command.phone,
-            birthdate: command.birthdate
+            dni: command.dni,
+            birthdate: command.birthdate,
+            observations: command.observations
         })
 
         await this.tenantRepository.update(command.id, updated)

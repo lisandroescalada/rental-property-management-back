@@ -1,5 +1,5 @@
-import { TenantOrmEntity } from "./tenant.orm-entity"
-import { Tenant } from "src/tenants/domain/entities/tenant.entity"
+import { TenantOrmEntity } from './tenant.orm-entity'
+import { Tenant } from 'src/tenants/domain/entities/tenant.entity'
 
 export class TenantMapper {
     static toDomain(ormEntity: TenantOrmEntity): Tenant {
@@ -16,15 +16,15 @@ export class TenantMapper {
         )
     }
 
-    static toPersistence(user: Tenant): Partial<TenantOrmEntity> {
+    static toPersistence(tenant: Tenant): Partial<TenantOrmEntity> {
         return {
-            id: user.id,
-            name: user.name,
-            phone: user.phone,
-            dni: user.dni,
-            birthdate: user.birthdate,
-            observations: user.observations ?? null,
-            userId: user.userId ?? null
+            id: tenant.id,
+            name: tenant.name,
+            phone: tenant.phone,
+            dni: tenant.dni,
+            birthdate: tenant.birthdate,
+            observations: tenant.observations ?? null,
+            userId: tenant.userId ?? null
         }
     }
 }
