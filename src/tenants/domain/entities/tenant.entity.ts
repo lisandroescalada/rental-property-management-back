@@ -1,12 +1,13 @@
-import { Birthdate } from "../value-object/birthdate.vo"
-import { Dni } from "../value-object/dni.vo"
-import { Name } from "../value-object/name.vo"
-import { Observations } from "../value-object/observations.vo"
-import { Phone } from "../value-object/phone.vo"
+import { Birthdate } from '../value-object/birthdate.vo'
+import { Dni } from '../value-object/dni.vo'
+import { Name } from '../value-object/name.vo'
+import { Observations } from '../value-object/observations.vo'
+import { Phone } from '../value-object/phone.vo'
+import { TenantId } from '../value-object/tenant-id.vo'
 
 export class Tenant {
     private constructor(
-        public readonly id: bigint,
+        public readonly id: TenantId,
         public readonly name: string,
         public readonly phone: string,
         public readonly dni: string,
@@ -34,7 +35,7 @@ export class Tenant {
             : undefined
 
         return new Tenant(
-            0n,
+            TenantId.generate(),
             newName,
             newPhone,
             newDni,
@@ -47,18 +48,27 @@ export class Tenant {
     }
 
     static reconstitute(
-        id: bigint,
+        id: TenantId | bigint,
         name: string,
         phone: string,
-        dni: string, 
+        dni: string,
         birthdate: string,
         observations?: string | undefined,
         userId?: bigint | undefined,
         createdAt?: Date,
         updatedAt?: Date
     ): Tenant {
+        const tenantId = typeof id === 'bigint' ? TenantId.fromDatabase(id) : id
         return new Tenant(
-            id, name, phone, dni, birthdate, observations, userId, createdAt, updatedAt
+            tenantId,
+            name,
+            phone,
+            dni,
+            birthdate,
+            observations,
+            userId,
+            createdAt,
+            updatedAt
         )
     }
 

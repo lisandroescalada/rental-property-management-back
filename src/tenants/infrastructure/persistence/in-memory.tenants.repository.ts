@@ -25,8 +25,8 @@ export class InMemoryTenantsRepository implements TenantRepository {
         const persisted = Tenant.reconstitute(
             id,
             tenant.name,
-            tenant.phone, 
-            tenant.dni, 
+            tenant.phone,
+            tenant.dni,
             tenant.birthdate,
             tenant.observations,
             tenant.userId,

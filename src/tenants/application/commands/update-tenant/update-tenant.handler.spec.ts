@@ -122,7 +122,7 @@ describe('UpdateTenantHandler', () => {
 
       const [id, updatedTenant] = mockRepository.update.mock.calls[0]
       expect(id).toBe(123n)
-      expect(updatedTenant.id).toBe(123n)
+      expect(updatedTenant.id.toString()).toBe('123')
     })
 
     it('should handle partial update with only one field', async () => {

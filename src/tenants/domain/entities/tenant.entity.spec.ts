@@ -34,7 +34,9 @@ describe('Tenant Entity', () => {
 
       // Assert: Verificar que se creó correctamente
       expect(tenant).toBeDefined()
-      expect(tenant.id).toBe(0n) // Los nuevos tenants tienen id 0
+      expect(tenant.id).toBeDefined()
+      expect(typeof tenant.id.value).toBe('string')
+      expect(tenant.id.toString()).toBe(tenant.id.value)
       expect(tenant.name).toBe(params.name)
       expect(tenant.phone).toBe(params.phone)
       expect(tenant.dni).toBe(params.dni)
@@ -137,7 +139,7 @@ describe('Tenant Entity', () => {
       )
 
       // Assert: Verificar que todos los valores se asignaron correctamente
-      expect(tenant.id).toBe(id)
+      expect(tenant.id.toString()).toBe(id.toString())
       expect(tenant.name).toBe(name)
       expect(tenant.phone).toBe(phone)
       expect(tenant.dni).toBe(dni)
@@ -157,7 +159,7 @@ describe('Tenant Entity', () => {
         '1990-01-01'
       )
 
-      expect(tenant.id).toBe(1n)
+      expect(tenant.id.toString()).toBe('1')
       expect(tenant.observations).toBeUndefined()
       expect(tenant.userId).toBeUndefined()
       expect(tenant.created_at).toBeUndefined()
@@ -250,7 +252,7 @@ describe('Tenant Entity', () => {
 
       const updated = tenant.updateProfile({ name: 'Updated Name' })
 
-      expect(updated.id).toBe(999n)
+      expect(updated.id.toString()).toBe('999')
     })
   })
 

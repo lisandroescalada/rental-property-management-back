@@ -18,7 +18,6 @@ export class TenantMapper {
 
     static toPersistence(tenant: Tenant): Partial<TenantOrmEntity> {
         return {
-            id: tenant.id,
             name: tenant.name,
             phone: tenant.phone,
             dni: tenant.dni,
