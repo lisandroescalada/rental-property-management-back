@@ -8,7 +8,7 @@ export class UpdateTenantDto {
     @MinLength(2, { message: 'Name must be at least 2 characters' })
     name?: string
 
-    @ApiPropertyOptional({ example: '604161117' })
+    @ApiPropertyOptional({ example: '1150018483' })
     @IsOptional()
     @IsPhoneNumber('IN', { message: 'Phone number must be a valid Argentine phone number' })
     phone?: string

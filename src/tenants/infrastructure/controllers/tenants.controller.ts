@@ -135,16 +135,25 @@ export class TenantsController {
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdateTenantDto
     ): Promise<void> {
-        return this.commandBus.execute(
-            new UpdateTenantCommand(
-                BigInt(id),
-                dto.name,
-                dto.phone,
-                dto.dni,
-                dto.birthdate,
-                dto.observations
+        try {
+            return this.commandBus.execute(
+                new UpdateTenantCommand(
+                    BigInt(id),
+                    dto.name,
+                    dto.phone,
+                    dto.dni,
+                    dto.birthdate,
+                    dto.observations
+                )
             )
-        )
+        }
+        catch (error) {
+            // Log the error for debugging purposes
+            console.error('Error updating tenant:', error)
+
+            // Rethrow the error to be handled by NestJS's global exception filter
+            throw error
+        }
     }
 
     // ─── DELETE /tenants/:id ─────────────────────────────────────────────────────

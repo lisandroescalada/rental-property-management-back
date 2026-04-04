@@ -5,6 +5,6 @@ export class CreateTenantCommand {
         public readonly dni: string,
         public readonly birthdate: string,
         public readonly observations: string | undefined,
-        public readonly userId: bigint | undefined,
+        public readonly userId: bigint | undefined
     ) {}
 }

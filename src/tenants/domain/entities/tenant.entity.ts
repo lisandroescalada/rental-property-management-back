@@ -1,3 +1,9 @@
+import { Birthdate } from "../value-object/birthdate.vo"
+import { Dni } from "../value-object/dni.vo"
+import { Name } from "../value-object/name.vo"
+import { Observations } from "../value-object/observations.vo"
+import { Phone } from "../value-object/phone.vo"
+
 export class Tenant {
     private constructor(
         public readonly id: bigint,
@@ -19,23 +25,22 @@ export class Tenant {
         observations?: string | undefined,
         userId?: bigint | undefined
     }): Tenant {
-        if (!params.name.trim()) throw new Error('Tenant name cannot be empty')
-        if (!params.phone.trim()) throw new Error('Tenant phone cannot be empty')
-        if (!params.dni.trim()) throw new Error('Tenant DNI cannot be empty')
-        if (!params.birthdate.trim()) throw new Error('Tenant birthdate cannot be empty')
-
-        const now = new Date()
+        const newName = Name.create(params.name).value
+        const newPhone = Phone.create(params.phone).value
+        const newDni = Dni.create(params.dni).value
+        const newBirthdate = Birthdate.create(params.birthdate).value
+        const newObservations = Observations.create(params.observations ?? '').value
 
         return new Tenant(
             0n,
-            params.name,
-            params.phone,
-            params.dni,
-            params.birthdate, 
-            params.observations, 
+            newName,
+            newPhone,
+            newDni,
+            newBirthdate,
+            newObservations,
             params.userId, 
-            now, 
-            now
+            new Date(), 
+            new Date()
         )
     }
 
@@ -51,8 +56,7 @@ export class Tenant {
         updatedAt?: Date
     ): Tenant {
         return new Tenant(
-            id, name, phone, dni, birthdate,
-            observations, userId, createdAt, updatedAt
+            id, name, phone, dni, birthdate, observations, userId, createdAt, updatedAt
         )
     }
 
@@ -61,36 +65,13 @@ export class Tenant {
         phone?: string
         dni?: string
         birthdate?: string
-        observations?: string | undefined
+        observations?: string
     }): Tenant {
-        const newName = params.name !== undefined ? params.name.trim() : this.name
-        const newPhone = params.phone !== undefined ? params.phone.trim() : this.phone
-        const newDni = params.dni !== undefined ? params.dni.trim() : this.dni
-        const newBirthdate = params.birthdate !== undefined ? params.birthdate.trim() : this.birthdate
-        const newObservations = params.observations !== undefined ? params.observations.trim() : this.observations
-
-        if (newName.length === 0) {
-            throw new Error('Tenant name cannot be empty')
-        }
-        if (newPhone.length === 0) {
-            throw new Error('Tenant phone cannot be empty')
-        }
-
-        if (newPhone.length === 0) {
-            throw new Error('Tenant phone cannot be empty')
-        }
-
-        if (newDni.length === 0) {
-            throw new Error('Tenant DNI cannot be empty')
-        }
-
-        if (newBirthdate.length === 0) {
-            throw new Error('Tenant birthdate cannot be empty')
-        }
-
-        if (newObservations !== undefined && newObservations.length === 0) {
-            throw new Error('Tenant observations cannot be empty if provided')
-        }
+        const newName = Name.create(params.name ?? this.name).value
+        const newPhone = Phone.create(params.phone ?? this.phone).value
+        const newDni = Dni.create(params.dni ?? this.dni).value
+        const newBirthdate = Birthdate.create(params.birthdate ?? this.birthdate).value
+        const newObservations = Observations.create(params.observations ?? this.observations ?? '').value
 
         return Tenant.reconstitute(
             this.id,
