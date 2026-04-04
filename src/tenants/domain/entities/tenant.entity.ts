@@ -29,7 +29,9 @@ export class Tenant {
         const newPhone = Phone.create(params.phone).value
         const newDni = Dni.create(params.dni).value
         const newBirthdate = Birthdate.create(params.birthdate).value
-        const newObservations = Observations.create(params.observations ?? '').value
+        const newObservations = params.observations !== undefined
+            ? Observations.create(params.observations).value
+            : undefined
 
         return new Tenant(
             0n,
@@ -38,8 +40,8 @@ export class Tenant {
             newDni,
             newBirthdate,
             newObservations,
-            params.userId, 
-            new Date(), 
+            params.userId,
+            new Date(),
             new Date()
         )
     }
@@ -71,7 +73,9 @@ export class Tenant {
         const newPhone = Phone.create(params.phone ?? this.phone).value
         const newDni = Dni.create(params.dni ?? this.dni).value
         const newBirthdate = Birthdate.create(params.birthdate ?? this.birthdate).value
-        const newObservations = Observations.create(params.observations ?? this.observations ?? '').value
+        const newObservations = params.observations !== undefined
+            ? Observations.create(params.observations).value
+            : this.observations
 
         return Tenant.reconstitute(
             this.id,
