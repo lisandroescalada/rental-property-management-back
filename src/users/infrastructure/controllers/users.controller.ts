@@ -24,7 +24,7 @@ import { PaginationQueryDto } from '../dto/pagination-query.dto'
 import { UserResponseDto } from '../dto/user-response.dto'
 import { PaginatedResponseDto } from '../dto/paginated-response.dto'
 
-@ApiTags('users')
+@ApiTags('Users')
 @Controller('users')
 export class UsersController {
     constructor(
