@@ -3,6 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { TenantOrmEntity } from '../persistence/tenant.orm-entity'
 import { TenantsController } from '../controllers/tenants.controller'
+import { UsersModule } from 'src/users/infrastructure/modules/users.module'
 import { MySqlTenantsRepository } from '../persistence/my-sql.tenants.repository'
 import { TENANT_REPOSITORY_TOKEN } from 'src/tenants/domain/repositories/tenant.repository'
 import { CreateTenantHandler } from 'src/tenants/application/commands/create-tenant/create-tenant.handler'
@@ -17,7 +18,8 @@ const CommandHandlers = [CreateTenantHandler, UpdateTenantHandler, DeleteTenantH
 @Module({
     imports: [
         CqrsModule,
-        TypeOrmModule.forFeature([TenantOrmEntity])
+        TypeOrmModule.forFeature([TenantOrmEntity]),
+        UsersModule
     ],
     controllers: [TenantsController],
     providers: [

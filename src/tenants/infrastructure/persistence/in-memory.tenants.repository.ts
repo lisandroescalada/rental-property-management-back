@@ -24,11 +24,11 @@ export class InMemoryTenantsRepository implements TenantRepository {
         // Rehidrata con el id asignado (simula el AUTO_INCREMENT de la BD)
         const persisted = Tenant.reconstitute(
             id,
-            tenant.name,
-            tenant.phone,
-            tenant.dni,
-            tenant.birthdate,
-            tenant.observations,
+            tenant.name.value,
+            tenant.phone.value,
+            tenant.dni.value,
+            tenant.birthdate.value,
+            tenant.observations?.value,
             tenant.userId,
             new Date(),
             new Date()
@@ -41,11 +41,11 @@ export class InMemoryTenantsRepository implements TenantRepository {
         const existing = this.store.get(id)!
         const updated = Tenant.reconstitute(
             id,
-            tenant.name ?? existing.name,
-            tenant.phone ?? existing.phone, 
-            tenant.dni ?? existing.dni, 
-            tenant.birthdate ?? existing.birthdate,
-            tenant.observations ?? existing.observations,
+            tenant.name?.value ?? existing.name.value,
+            tenant.phone?.value ?? existing.phone.value, 
+            tenant.dni?.value ?? existing.dni.value, 
+            tenant.birthdate?.value ?? existing.birthdate.value,
+            tenant.observations?.value ?? existing.observations?.value,
             tenant.userId ?? existing.userId,
             existing.created_at,
             new Date()

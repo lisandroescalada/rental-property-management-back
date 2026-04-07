@@ -60,11 +60,11 @@ describe('UpdateTenantHandler', () => {
       expect(mockRepository.update).toHaveBeenCalledTimes(1)
       const [id, updatedTenant] = mockRepository.update.mock.calls[0]
       expect(id).toBe(1n)
-      expect(updatedTenant.name).toBe('New Name')
-      expect(updatedTenant.phone).toBe('+34 600 222 222')
-      expect(updatedTenant.dni).toBe('22222222B')
-      expect(updatedTenant.birthdate).toBe('1991-02-02')
-      expect(updatedTenant.observations).toBe('New obs')
+      expect(updatedTenant.name.value).toBe('New Name')
+      expect(updatedTenant.phone.value).toBe('+34 600 222 222')
+      expect(updatedTenant.dni.value).toBe('22222222B')
+      expect(updatedTenant.birthdate.value).toBe('1991-02-02')
+      expect(updatedTenant.observations?.value).toBe('New obs')
     })
 
     it('should update only some fields and preserve others', async () => {
@@ -90,10 +90,10 @@ describe('UpdateTenantHandler', () => {
       await handler.execute(command)
 
       const [, updatedTenant] = mockRepository.update.mock.calls[0]
-      expect(updatedTenant.name).toBe('Juan García')
-      expect(updatedTenant.phone).toBe('+34 600 111 111') // Se preserva
-      expect(updatedTenant.dni).toBe('11111111A') // Se preserva
-      expect(updatedTenant.birthdate).toBe('1990-01-01') // Se preserva
+      expect(updatedTenant.name.value).toBe('Juan García')
+      expect(updatedTenant.phone.value).toBe('+34 600 111 111') // Se preserva
+      expect(updatedTenant.dni.value).toBe('11111111A') // Se preserva
+      expect(updatedTenant.birthdate.value).toBe('1990-01-01') // Se preserva
     })
 
     it('should throw TenantNotFoundexception when tenant does not exist', async () => {
@@ -142,9 +142,9 @@ describe('UpdateTenantHandler', () => {
       await handler.execute(command)
 
       const [, updatedTenant] = mockRepository.update.mock.calls[0]
-      expect(updatedTenant.phone).toBe('+34 600 999 999')
-      expect(updatedTenant.name).toBe('Juan López')
-      expect(updatedTenant.observations).toBe('Important obs')
+      expect(updatedTenant.phone.value).toBe('+34 600 999 999')
+      expect(updatedTenant.name.value).toBe('Juan López')
+      expect(updatedTenant.observations?.value).toBe('Important obs')
     })
 
     it('should throw error if repository update fails', async () => {
