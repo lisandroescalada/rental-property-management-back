@@ -27,9 +27,8 @@ export class CreateTenantDto {
     @IsString()
     observations?: string | undefined
 
-    // user_id: se valida en T-2 cuando se conecte con UserRepository
     @ApiPropertyOptional({ example: '3' })
     @IsOptional()
-    @Transform(({ value }) => BigInt(value))
-    userId?: bigint | undefined
+    @Transform(({ value }) => value ? BigInt(value) : undefined)
+    userId?: bigint
 }

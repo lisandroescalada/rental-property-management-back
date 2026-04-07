@@ -2,6 +2,7 @@ import { CreateTenantCommand } from './create-tenant.command'
 import { CreateTenantHandler } from './create-tenant.handler'
 import { Tenant } from '../../../domain/entities/tenant.entity'
 import { TenantRepository } from '../../../domain/repositories/tenant.repository'
+import { UserRepository } from '../../../../users/domain/repositories/user.repository'
 import { InvalidNameException } from '../../../domain/excepcions/invalid-name.exception'
 
 /**
@@ -17,6 +18,7 @@ describe('CreateTenantHandler', () => {
   
   let handler: CreateTenantHandler
   let mockRepository: jest.Mocked<TenantRepository>
+  let mockUserRepository: jest.Mocked<UserRepository>
 
   beforeEach(() => {
     // Arrange: Preparar mock del repositorio
@@ -29,8 +31,17 @@ describe('CreateTenantHandler', () => {
       count: jest.fn()
     } as any
 
+    mockUserRepository = {
+      save: jest.fn().mockResolvedValue(undefined),
+      findById: jest.fn().mockResolvedValue({} as any), // Mock user exists
+      findAll: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn()
+    } as any
+
     // Inyectar mock en el handler
-    handler = new CreateTenantHandler(mockRepository)
+    handler = new CreateTenantHandler(mockRepository, mockUserRepository)
   })
 
   describe('execute()', () => {
