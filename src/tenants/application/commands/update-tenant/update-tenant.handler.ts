@@ -17,11 +17,11 @@ export class UpdateTenantHandler implements ICommandHandler<UpdateTenantCommand>
         if (!existing) throw new TenantNotFoundexception(command.id)
 
         const updated = existing.updateProfile({
-            name: command.name ?? existing.name,
-            phone: command.phone ?? existing.phone,
-            dni: command.dni ?? existing.dni,
-            birthdate: command.birthdate ?? existing.birthdate,
-            observations: command.observations ?? existing.observations
+            name: command.name ?? existing.name.value,
+            phone: command.phone ?? existing.phone.value,
+            dni: command.dni ?? existing.dni.value,
+            birthdate: command.birthdate ?? existing.birthdate.value,
+            observations: command.observations ?? existing.observations?.value
         })
 
         await this.tenantRepository.update(command.id, updated)

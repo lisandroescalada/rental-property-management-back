@@ -8,11 +8,11 @@ import { TenantId } from '../value-object/tenant-id.vo'
 export class Tenant {
     private constructor(
         public readonly id: TenantId,
-        public readonly name: string,
-        public readonly phone: string,
-        public readonly dni: string,
-        public readonly birthdate: string,
-        public readonly observations?: string | undefined,
+        public readonly name: Name,
+        public readonly phone: Phone,
+        public readonly dni: Dni,
+        public readonly birthdate: Birthdate,
+        public readonly observations?: Observations,
         public readonly userId?: bigint | undefined,
         public readonly created_at?: Date,
         public readonly updated_at?: Date
@@ -26,21 +26,13 @@ export class Tenant {
         observations?: string | undefined,
         userId?: bigint | undefined
     }): Tenant {
-        const newName = Name.create(params.name).value
-        const newPhone = Phone.create(params.phone).value
-        const newDni = Dni.create(params.dni).value
-        const newBirthdate = Birthdate.create(params.birthdate).value
-        const newObservations = params.observations !== undefined
-            ? Observations.create(params.observations).value
-            : undefined
-
         return new Tenant(
             TenantId.generate(),
-            newName,
-            newPhone,
-            newDni,
-            newBirthdate,
-            newObservations,
+            Name.create(params.name),
+            Phone.create(params.phone),
+            Dni.create(params.dni),
+            Birthdate.create(params.birthdate),
+            params.observations !== undefined ? Observations.create(params.observations) : undefined,
             params.userId,
             new Date(),
             new Date()
@@ -61,11 +53,11 @@ export class Tenant {
         const tenantId = typeof id === 'bigint' ? TenantId.fromDatabase(id) : id
         return new Tenant(
             tenantId,
-            name,
-            phone,
-            dni,
-            birthdate,
-            observations,
+            Name.create(name),
+            Phone.create(phone),
+            Dni.create(dni),
+            Birthdate.create(birthdate),
+            observations !== undefined ? Observations.create(observations) : undefined,
             userId,
             createdAt,
             updatedAt
@@ -79,24 +71,16 @@ export class Tenant {
         birthdate?: string
         observations?: string
     }): Tenant {
-        const newName = Name.create(params.name ?? this.name).value
-        const newPhone = Phone.create(params.phone ?? this.phone).value
-        const newDni = Dni.create(params.dni ?? this.dni).value
-        const newBirthdate = Birthdate.create(params.birthdate ?? this.birthdate).value
-        const newObservations = params.observations !== undefined
-            ? Observations.create(params.observations).value
-            : this.observations
-
         return Tenant.reconstitute(
             this.id,
-            newName,
-            newPhone,
-            newDni,
-            newBirthdate,
-            newObservations,
+            Name.create(params.name ?? this.name.value).value,
+            Phone.create(params.phone ?? this.phone.value).value,
+            Dni.create(params.dni ?? this.dni.value).value,
+            Birthdate.create(params.birthdate ?? this.birthdate.value).value,
+            params.observations !== undefined ? Observations.create(params.observations).value : this.observations?.value,
             this.userId,
             this.created_at,
-            new Date(),
+            new Date()
         )
     }
 }

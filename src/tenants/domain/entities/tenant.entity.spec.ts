@@ -37,11 +37,11 @@ describe('Tenant Entity', () => {
       expect(tenant.id).toBeDefined()
       expect(typeof tenant.id.value).toBe('string')
       expect(tenant.id.toString()).toBe(tenant.id.value)
-      expect(tenant.name).toBe(params.name)
-      expect(tenant.phone).toBe(params.phone)
-      expect(tenant.dni).toBe(params.dni)
-      expect(tenant.birthdate).toBe(params.birthdate)
-      expect(tenant.observations).toBe(params.observations)
+      expect(tenant.name.value).toBe(params.name)
+      expect(tenant.phone.value).toBe(params.phone)
+      expect(tenant.dni.value).toBe(params.dni)
+      expect(tenant.birthdate.value).toBe(params.birthdate)
+      expect(tenant.observations?.value).toBe(params.observations)
       expect(tenant.userId).toBe(params.userId)
       expect(tenant.created_at).toBeInstanceOf(Date)
       expect(tenant.updated_at).toBeInstanceOf(Date)
@@ -140,11 +140,11 @@ describe('Tenant Entity', () => {
 
       // Assert: Verificar que todos los valores se asignaron correctamente
       expect(tenant.id.toString()).toBe(id.toString())
-      expect(tenant.name).toBe(name)
-      expect(tenant.phone).toBe(phone)
-      expect(tenant.dni).toBe(dni)
-      expect(tenant.birthdate).toBe(birthdate)
-      expect(tenant.observations).toBe(observations)
+      expect(tenant.name.value).toBe(name)
+      expect(tenant.phone.value).toBe(phone)
+      expect(tenant.dni.value).toBe(dni)
+      expect(tenant.birthdate.value).toBe(birthdate)
+      expect(tenant.observations?.value).toBe(observations)
       expect(tenant.userId).toBe(userId)
       expect(tenant.created_at).toBe(createdAt)
       expect(tenant.updated_at).toBe(updatedAt)
@@ -190,11 +190,11 @@ describe('Tenant Entity', () => {
       })
 
       // Assert: Verificar que los datos se actualizaron
-      expect(updatedTenant.name).toBe('New Name')
-      expect(updatedTenant.phone).toBe('+34 600 222 222')
-      expect(updatedTenant.dni).toBe('22222222B')
-      expect(updatedTenant.birthdate).toBe('1991-02-02')
-      expect(updatedTenant.observations).toBe('New observation')
+      expect(updatedTenant.name.value).toBe('New Name')
+      expect(updatedTenant.phone.value).toBe('+34 600 222 222')
+      expect(updatedTenant.dni.value).toBe('22222222B')
+      expect(updatedTenant.birthdate.value).toBe('1991-02-02')
+      expect(updatedTenant.observations?.value).toBe('New observation')
     })
 
     it('should update only some fields', () => {
@@ -212,11 +212,11 @@ describe('Tenant Entity', () => {
       })
 
       // Assert: Verificar actualizaciones parciales
-      expect(updatedTenant.name).toBe('Juan García')
-      expect(updatedTenant.phone).toBe('+34 600 222 222')
+      expect(updatedTenant.name.value).toBe('Juan García')
+      expect(updatedTenant.phone.value).toBe('+34 600 222 222')
       // Los campos no actualizados mantienen el valor original
-      expect(updatedTenant.dni).toBe('11111111A')
-      expect(updatedTenant.birthdate).toBe('1990-01-01')
+      expect(updatedTenant.dni.value).toBe('11111111A')
+      expect(updatedTenant.birthdate.value).toBe('1990-01-01')
     })
 
     it('should throw InvalidNameException when updating with invalid name', () => {
@@ -270,8 +270,8 @@ describe('Tenant Entity', () => {
       const updated = original.updateProfile({ name: 'New Name' })
 
       // Original debe mantener sus valores
-      expect(original.name).toBe('Original Name')
-      expect(updated.name).toBe('New Name')
+      expect(original.name.value).toBe('Original Name')
+      expect(updated.name.value).toBe('New Name')
     })
   })
 })

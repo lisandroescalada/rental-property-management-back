@@ -6,12 +6,12 @@ export class TenantAssembler {
     static toDto(tenant: Tenant): TenantResponseDto {
         const dto = new TenantResponseDto()
 
-        dto.name = tenant.name
+        dto.name = tenant.name.value
         dto.id = tenant.id.toString()
-        dto.phone = tenant.phone
-        dto.dni = tenant.dni
-        dto.birthdate = tenant.birthdate
-        dto.observations = tenant.observations ?? undefined
+        dto.phone = tenant.phone.value
+        dto.dni = tenant.dni.value
+        dto.birthdate = tenant.birthdate.value
+        dto.observations = tenant.observations?.value ?? undefined
         dto.userId = tenant.userId?.toString() ?? undefined
         dto.created_at = tenant.created_at
         dto.updated_at= tenant.updated_at

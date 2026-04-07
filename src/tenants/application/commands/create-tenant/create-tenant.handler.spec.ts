@@ -53,11 +53,11 @@ describe('CreateTenantHandler', () => {
       expect(mockRepository.save).toHaveBeenCalledTimes(1)
       const savedTenant = mockRepository.save.mock.calls[0][0]
       expect(savedTenant).toBeInstanceOf(Tenant)
-      expect(savedTenant.name).toBe(command.name)
-      expect(savedTenant.phone).toBe(command.phone)
-      expect(savedTenant.dni).toBe(command.dni)
-      expect(savedTenant.birthdate).toBe(command.birthdate)
-      expect(savedTenant.observations).toBe(command.observations)
+      expect(savedTenant.name.value).toBe(command.name)
+      expect(savedTenant.phone.value).toBe(command.phone)
+      expect(savedTenant.dni.value).toBe(command.dni)
+      expect(savedTenant.birthdate.value).toBe(command.birthdate)
+      expect(savedTenant.observations?.value).toBe(command.observations)
       expect(savedTenant.userId).toBe(command.userId)
     })
 
